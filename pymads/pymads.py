@@ -55,7 +55,7 @@ class DnsServer(object):
         self.read_config()
 
     def __repr__(self):
-        return '<pymds dns serving on %s:%d>' % (self.listen_host, self.listen_port)
+        return '<pymads dns serving on %s:%d>' % (self.listen_host, self.listen_port)
 
     def add_config_file(self, config_file):
     """Adds a config to the list of config files, needs to call read_config() afterwards"""
@@ -273,7 +273,7 @@ class DnsServer(object):
 
 def main():
 
-    usage = '%prog [options] [config_files]\n\nconfig_files = One or more config files, defaults to "pymds.conf"'
+    usage = '%prog [options] [config_files]\n\nconfig_files = One or more config files, defaults to "pymads.conf"'
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('-p', '--port', dest='port', type=int, default=53,
         help='Port to run the DNS server on (default: 53)')
@@ -285,7 +285,7 @@ def main():
 
     config_files = {}
     if not filenames:
-        filenames = ['pymds.conf']
+        filenames = ['pymads.conf']
     for f in filenames:
         if f in config_files:
             raise Exception("repeated configuration")

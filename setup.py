@@ -8,19 +8,22 @@
 import setuptools
 
 setuptools.setup (
-    name = 'pymds',
+    name = 'pymads',
     version = '0.5',
-    package_dir = { '': 'src' },
-    packages = setuptools.find_packages('src'),
+    packages = [
+        'pymads',
+        'pymads.filters',
+        'pymads.sources',
+    ]
     zip_safe = True,
     entry_points = {
         'console_scripts': [
-            'pymds = pymds.pymds:main',
+            'pymads = pymads.pymads:main',
         ],
     },
-    author = 'Tom Pinckney',
-    description = 'An authoritative-only DNS server with a pluggable architecture for determining how to resolve each request',
+    author = 'Philip Horger',
+    description = 'A fork of the pymds authoritative DNS server, designed for asynchronous lookup without domain restrictions.',
     license = 'MIT',
     keywords = 'dns authoritativednsserver geodns dnsloadbalancer',
-    url = 'http://code.google.com/p/pymds/',
+    url = 'https://github.com/campadrenalin/pymads',
 )

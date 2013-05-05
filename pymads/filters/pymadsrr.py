@@ -1,7 +1,7 @@
 import socket
 import random
 
-from pymds.utils import *
+from pymads.utils import *
 
 class Filter(object):
     def __init__(self, netmask):

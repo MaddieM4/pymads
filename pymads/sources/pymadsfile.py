@@ -19,9 +19,9 @@
 
 
 #
-# A pymds source filter.
+# A pymads source filter.
 #
-# pymdsfile answers queries by consulting a text database.
+# pymadsfile answers queries by consulting a text database.
 #
 # initializer: a single argument specifying the name of the database
 # file.  See the example pinckney.com.txt database for documentation
@@ -30,7 +30,7 @@
 
 import struct
 
-from pymds.utils import *
+from pymads.utils import *
 
 class Source(object):
     def __init__(self, filename):

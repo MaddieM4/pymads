@@ -1,34 +1,37 @@
 README
 ===================
 
-This is a fork of the original project from google code by Thomas
+This is a fork of a fork of Thomas Pinckney's pymds project.
+
 Pinckney: http://code.google.com/p/pymds/
+thekad: https://github.com/thekad/pymds
 
 Overview
 ===================
 
-pymds is an authoritative DNS server which makes all name resolution
-decisions using external modules. pymds itself cannot resolve
+pymads is an authoritative DNS server which makes all name resolution
+decisions using external modules. pymads itself cannot resolve
 anything. Instead, it relies on plugins which convert names in
-client queries into responses that pymds then sends.
+client queries into responses that pymads then sends.
 
-pymds is not designed as a DNS client / resolver / cache. It will not
-look up anything for. All it is designed to do is answer queries for a
-specific domain. djbdns comes with an excellent resolver and cache if 
-that's what you're looking for.
+pymads differs from pymds in that it's designed for asynchronous
+service/resolution, and it does not limit itself to specific DNS
+zones. This allows you to use it as an "internet-wide" server. These
+requirements are important for the project's intended use: the DNS
+side of DJDNS.
 
 What's included
 ===================
 
 This source distribution contains:
 
-1) pymds -- The core DNS server itself.
+1) pymads -- The core DNS server itself.
 
-2) pymdsfile -- A plugin for answering queries based on a text file
-database. This is a "source" plugin in pymds parlance. See below for
+2) pymadsfile -- A plugin for answering queries based on a text file
+database. This is a "source" plugin in pymads parlance. See below for
 the format of the database file syntax.
 
-3) pymdsrr -- A plugin that randomizes the order of multiple A record
+3) pymadsrr -- A plugin that randomizes the order of multiple A record
 responses. This is a "filter" plugin as opposed to a "source"
 plugin. Thus, it cannot resolve names to answers, only alter the
 answers that some "source" plugin has already provided.
@@ -36,25 +39,12 @@ answers that some "source" plugin has already provided.
 Usage
 ===================
 
-You will need python 2.5 (which is what I test). Other versions of
-Python may or may not work.
+pymads is tested on Python 2.6-3.3.
 
-By default, pymds will listen on port 53 on all interfaces. You
-can override the port and/or host to listen on with the -p and
--h options. 
-
-By default, pymds will read configuration information from
-a file named pymds.conf in the current directory. If you want
-to specify a different file, list it on the command line. 
-
-There must be a different configuration file for each domain
-that pymds serves. If you want pymds to serve multiple domains,
-list multiple configuration files on the command line.
-
-# pymds [-p port] [-h host] [config1] [config2] ...
-
-If you change a configuration file and want to reload pymds, send it
-SIGHUP.
+Unlike pymds, pymads is not intended to be used as a standalone
+server. pymads is intended to work as a callback-based component of
+a larger program, acting as a self-contained library, configured
+programmatically rather than through config files.
 
 Configuration
 ===================
@@ -64,4 +54,4 @@ See the examples/ directory for configuration file examples.
 Source, reporting bugs, etc
 ===================
 
-See http://pymds.sourceforge.net for more information
+See [the issue tracker](https://github.com/campadrenalin/pymads/issues).
