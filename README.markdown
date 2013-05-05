@@ -3,8 +3,8 @@ README
 
 This is a fork of a fork of Thomas Pinckney's pymds project.
 
-Pinckney: http://code.google.com/p/pymds/
-thekad: https://github.com/thekad/pymds
+ * Pinckney: http://code.google.com/p/pymds/
+ * thekad: https://github.com/thekad/pymds
 
 Overview
 ===================
