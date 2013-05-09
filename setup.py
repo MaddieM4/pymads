@@ -14,7 +14,8 @@ setuptools.setup (
         'pymads',
         'pymads.filters',
         'pymads.sources',
-    ]
+        'pymads.tests',
+    ],
     zip_safe = True,
     entry_points = {
         'console_scripts': [

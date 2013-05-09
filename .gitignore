@@ -1,6 +1,8 @@
 .svn
 *.pyc
+*.swp
 env/
 build/
 dist/
+.tox/
 *.egg-info

@@ -58,18 +58,18 @@ class DnsServer(object):
         return '<pymads dns serving on %s:%d>' % (self.listen_host, self.listen_port)
 
     def add_config_file(self, config_file):
-    """Adds a config to the list of config files, needs to call read_config() afterwards"""
+        """Adds a config to the list of config files, needs to call read_config() afterwards"""
 
         if config_file not in self.config_files.keys():
             self.config_files[config_file] = {}
 
     def set_port(self, port):
-    """Sets the port who should bing ourselves to"""
+        """Sets the port who should bing ourselves to"""
 
         self.listen_port = int(port)
 
     def set_host(self, host):
-    """Sets the host/ipaddress we should bing ourselves to"""
+        """Sets the host/ipaddress we should bing ourselves to"""
 
         self.listen_host = host
 
@@ -77,7 +77,7 @@ class DnsServer(object):
         self.debug = debug
 
     def serve(self):
-    """Serves forever"""
+        """Serves forever"""
 
         udps = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udps.bind((self.listen_host, self.listen_port))
@@ -139,7 +139,7 @@ class DnsServer(object):
         return ns, ar
         
     def parse_request(self, packet):
-    """Parses the packet query to something we can give back"""
+        """Parses the packet query to something we can give back"""
 
         hdr_len = 12
         header = packet[:hdr_len]
@@ -169,7 +169,7 @@ class DnsServer(object):
         return (qid, labels, qtype, qclass)
 
     def format_response(self, qid, question, qtype, qclass, rcode, an_resource_records, ns_resource_records, ar_resource_records):
-    """Formats the packet response"""
+        """Formats the packet response"""
 
         resources = []
         resources.extend(an_resource_records)
@@ -187,7 +187,7 @@ class DnsServer(object):
         return pkt
 
     def format_header(self, qid, rcode, ancount, nscount, arcount):
-    """Formats the header to be used in the response packet"""
+        """Formats the header to be used in the response packet"""
 
         flags = 0
         flags |= (1 << 15)
@@ -197,14 +197,14 @@ class DnsServer(object):
         return hdr
 
     def format_question(self, question, qtype, qclass):
-    """Formats the question field to be used in the response packet"""
+        """Formats the question field to be used in the response packet"""
 
         q = utils.labels2str(question)
         q += struct.pack("!HH", qtype, qclass)
         return q
 
     def format_resource(self, resource, question):
-    """Formats the resource fields to be used in the response packet"""
+        """Formats the resource fields to be used in the response packet"""
 
         r = ''
         r += utils.labels2str(question)
@@ -213,7 +213,7 @@ class DnsServer(object):
         return r
 
     def read_config(self):
-    """ Reads the config from the list of config files"""
+        """ Reads the config from the list of config files"""
 
         for config_file in self.config_files:
             self.config_files[config_file] = config = {}
@@ -260,12 +260,12 @@ class DnsServer(object):
             sys.stderr.write("read configuration from %s\n" % config_file)
 
     def reread(self, signum, frame):
-    """Used when trapping the signal, usually SIGHUP"""
+        """Used when trapping the signal, usually SIGHUP"""
 
         self.read_config()
     
     def die(self, msg):
-    """Just a msg wrapper"""
+        """Just a msg wrapper"""
 
         sys.stderr.write(msg)
         sys.exit(-1)
