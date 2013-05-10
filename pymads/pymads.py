@@ -33,8 +33,6 @@ import sys
 
 from pymads import utils
 
-
-
 class DnsError(Exception):
     pass
 
