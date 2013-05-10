@@ -23,14 +23,15 @@
 #     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 #     OTHER DEALINGS IN THE SOFTWARE.
 
-import ConfigParser
+from __future__ import absolute_import
+from pymads.extern import ConfigParser
 import optparse
 import signal
 import socket
 import struct
 import sys
 
-import utils
+from pymads import utils
 
 
 

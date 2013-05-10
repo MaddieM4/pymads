@@ -1,9 +1,8 @@
+from __future__ import print_function
+
 import os
 import sys
-if (2, 7) <= sys.version_info[:2] < (3, 0) or sys.version_info >= (3, 2):
-    import unittest
-else:
-    import unittest2 as unittest
+from pymads.extern import unittest
 
 def main():
     loader = unittest.TestLoader()
