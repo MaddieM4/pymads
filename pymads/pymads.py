@@ -31,49 +31,51 @@ import socket
 import struct
 import sys
 
-from pymads import utils
+from pymads import utils, request, response
+from pymads.errors import *
 
-class DnsError(Exception):
-    pass
-
+default_config = {
+    'listen_host' : '0.0.0.0',
+    'listen_port' : 53,
+    'debug' : False,
+    'chains' : [],
+}
 
 class DnsServer(object):
 
-    config_files = {}
-    listen_host = '0.0.0.0'
-    listen_port = 53
-    debug = False
-
-    def __init__(self, config_files=None, listen_host=None, listen_port=None):
-        if config_files:
-            self.config_files = config_files
-        if listen_host:
-            self.listen_host = listen_host
-        if listen_port:
-            self.listen_port = listen_port
-        self.read_config()
+    def __init__(self, **kwargs):
+        self.config = dict(default_config) # Clone
+        self.config.update(kwargs) # Customize
 
     def __repr__(self):
         return '<pymads dns serving on %s:%d>' % (self.listen_host, self.listen_port)
 
-    def add_config_file(self, config_file):
-        """Adds a config to the list of config files, needs to call read_config() afterwards"""
+    @property
+    def listen_port(self):
+        return self.config['listen_port']
 
-        if config_file not in self.config_files.keys():
-            self.config_files[config_file] = {}
+    @listen_port.setter
+    def listen_port(self, port):
+        """Sets the port who should bind ourselves to"""
+        self.config['listen_port'] = int(port)
 
-    def set_port(self, port):
-        """Sets the port who should bing ourselves to"""
+    @property
+    def listen_host(self):
+        return self.config['listen_host']
 
-        self.listen_port = int(port)
+    @listen_host.setter
+    def listen_host(self, host):
+        """Sets the host/ipaddress we should bind ourselves to"""
+        self.config['listen_host'] = int(host)
 
-    def set_host(self, host):
-        """Sets the host/ipaddress we should bing ourselves to"""
+    @property
+    def debug(self):
+        return self.config['debug']
 
-        self.listen_host = host
-
-    def set_debug(self, debug=True):
-        self.debug = debug
+    @debug.setter
+    def debug(self, debug):
+        """Sets whether we are in debug mode"""
+        self.config['debug'] = bool(debug)
 
     def serve(self):
         """Serves forever"""
@@ -87,44 +89,34 @@ class DnsServer(object):
                 req_pkt, src_addr = udps.recvfrom(512)   # max UDP DNS pkt size
             except socket.error:
                 continue
-            qid = None
             try:
                 exception_rcode = None
                 try:
-                    qid, question, qtype, qclass = self.parse_request(req_pkt)
+                    req = request.parse(req_pkt, src_addr)
                 except:
                     exception_rcode = 1
                     raise Exception("could not parse query")
-                question = map(lambda x: x.lower(), question)
-                found = False
-                for config in self.config_files.values():
-                    if question[1:] == config['domain']:
-                        query = question[0]
-                    elif question == config['domain']:
-                        query = ''
-                    else:
-                        continue
-                    rcode, an_resource_records = config['source'].get_response(query, config['domain'], qtype, qclass, src_addr)
-                    if rcode == 0 and 'filters' in config:
-                        for f in config['filters']:
-                            an_resource_records = f.filter(query, config['domain'], qtype, qclass, src_addr, an_resource_records)
-                    resp_pkt = self.format_response(qid, question, qtype, qclass, rcode, an_resource_records, ns_resource_records, ar_resource_records)
+                for chain in self.config['chains']:
+                    rcode, an_records = chain.get(req)
+                    resp = response.Response(req, rcode, an_records)
+                    resp_pkt = str(resp)
                     found = True
                     if self.debug:
-                        sys.stdout.write('Found question=%s, qtype=%s, qclass=%s\n' % (question, qtype, qclass))
+                        sys.stdout.write('Found %r' % req)
                         sys.stdout.flush()
                     break
                 if not found:
                     if self.debug:
-                        sys.stderr.write('Unknown question=%s, qtype=%s, qclass=%s\n' % (question, qtype, qclass))
+                        sys.stderr.write('Unknown %r' % req)
                         sys.stderr.flush()
                     exception_rcode = 3
-                    raise Exception("query is not for our domain: %s" % ".".join(question))
+                    raise Exception("query is not for our domain: %s" % ".".join(req.question))
             except:
-                if qid:
+                if req.qid:
                     if exception_rcode is None:
                         exception_rcode = 2
-                    resp_pkt = self.format_response(qid, question, qtype, qclass, exception_rcode, [], [], [])
+                    resp = response.Response(req, exception_rcode)
+                    resp_pkt = str(resp)
                 else:
                     continue
             udps.sendto(resp_pkt, src_addr)
@@ -136,133 +128,7 @@ class DnsServer(object):
             ns.append({'qtype':2, 'qclass':1, 'ttl':ttl, 'rdata':utils.labels2str(name_server)})
             ar.append({'qtype':1, 'qclass':1, 'ttl':ttl, 'rdata':struct.pack("!I", ip)})
         return ns, ar
-        
-    def parse_request(self, packet):
-        """Parses the packet query to something we can give back"""
 
-        hdr_len = 12
-        header = packet[:hdr_len]
-        qid, flags, qdcount, _, _, _ = struct.unpack('!HHHHHH', header)
-        qr = (flags >> 15) & 0x1
-        opcode = (flags >> 11) & 0xf
-        rd = (flags >> 8) & 0x1
-        #print "qid", qid, "qdcount", qdcount, "qr", qr, "opcode", opcode, "rd", rd
-        if qr != 0 or opcode != 0 or qdcount == 0:
-            raise DnsError("Invalid query")
-        body = packet[hdr_len:]
-        labels = []
-        offset = 0
-        while True:
-            label_len, = struct.unpack('!B', body[offset:offset+1])
-            offset += 1
-            if label_len & 0xc0:
-                raise DnsError("Invalid label length %d" % label_len)
-            if label_len == 0:
-                break
-            label = body[offset:offset+label_len]
-            offset += label_len
-            labels.append(label)
-        qtype, qclass= struct.unpack("!HH", body[offset:offset+4])
-        if qclass != 1:
-            raise DnsError("Invalid class: " + qclass)
-        return (qid, labels, qtype, qclass)
-
-    def format_response(self, qid, question, qtype, qclass, rcode, an_resource_records, ns_resource_records, ar_resource_records):
-        """Formats the packet response"""
-
-        resources = []
-        resources.extend(an_resource_records)
-        num_an_resources = len(an_resource_records)
-        num_ns_resources = num_ar_resources = 0
-        if rcode == 0:
-            resources.extend(ns_resource_records)
-            resources.extend(ar_resource_records)
-            num_ns_resources = len(ns_resource_records)
-            num_ar_resources = len(ar_resource_records)
-        pkt = self.format_header(qid, rcode, num_an_resources, num_ns_resources, num_ar_resources)
-        pkt += self.format_question(question, qtype, qclass)
-        for resource in resources:
-            pkt += self.format_resource(resource, question)
-        return pkt
-
-    def format_header(self, qid, rcode, ancount, nscount, arcount):
-        """Formats the header to be used in the response packet"""
-
-        flags = 0
-        flags |= (1 << 15)
-        flags |= (1 << 10)
-        flags |= (rcode & 0xf)
-        hdr = struct.pack("!HHHHHH", qid, flags, 1, ancount, nscount, arcount)
-        return hdr
-
-    def format_question(self, question, qtype, qclass):
-        """Formats the question field to be used in the response packet"""
-
-        q = utils.labels2str(question)
-        q += struct.pack("!HH", qtype, qclass)
-        return q
-
-    def format_resource(self, resource, question):
-        """Formats the resource fields to be used in the response packet"""
-
-        r = ''
-        r += utils.labels2str(question)
-        r += struct.pack("!HHIH", resource['qtype'], resource['qclass'], resource['ttl'], len(resource['rdata']))
-        r += resource['rdata']
-        return r
-
-    def read_config(self):
-        """ Reads the config from the list of config files"""
-
-        for config_file in self.config_files:
-            self.config_files[config_file] = config = {}
-            config_parser = ConfigParser.SafeConfigParser()
-            try:
-                config_parser.read(config_file)
-                config_values = config_parser.items("default")    
-            except:
-                self.die("Error reading config file %s\n" % config_file)
-
-            for var, value in config_values:
-                if var == "domain":
-                    config['domain'] = value.split(".")
-                elif var == "name servers":
-                    config['name_servers'] = []
-                    split_name_servers = value.split(":")
-                    num_split_name_servers = len(split_name_servers)
-                    for i in range(0,num_split_name_servers,3):
-                        server = split_name_servers[i]
-                        ip = split_name_servers[i+1]
-                        ttl = int(split_name_servers[i+2])
-                        config['name_servers'].append((server.split("."), utils.ipstr2int(ip), ttl))
-                elif var == 'source':
-                    module_and_args = value.split(":")
-                    module = module_and_args[0]
-                    args = module_and_args[1:]
-                    source_module = __import__(module, {}, {}, [''])
-                    source_instance = source_module.Source(*args)
-                    config['source'] = source_instance
-                elif var == 'filters':
-                    config['filters'] = []
-                    for module_and_args_str in value.split():
-                        module_and_args = module_and_args_str.split(":")
-                        module = module_and_args[0]
-                        args = module_and_args[1:]
-                        filter_module = __import__(module, {}, {}, [''])            
-                        filter_instance = filter_module.Filter(*args)
-                        config['filters'].append(filter_instance)
-                else:
-                    self.die("unrecognized parameter in conf file %s: %s\n" % (config_file, var))
-
-            if 'domain' not in config or 'source' not in config:
-                self.die("must specify domain name and source in conf file %s\n", config_file)
-            sys.stderr.write("read configuration from %s\n" % config_file)
-
-    def reread(self, signum, frame):
-        """Used when trapping the signal, usually SIGHUP"""
-
-        self.read_config()
-    
     def die(self, msg):
         """Just a msg wrapper"""
 

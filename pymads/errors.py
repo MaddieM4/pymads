@@ -1,0 +1,2 @@
+class DnsError(Exception):
+    pass
