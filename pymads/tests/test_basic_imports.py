@@ -2,7 +2,7 @@ from pymads.extern import unittest
 
 class TestImports(unittest.TestCase):
     def test_import_server(self):
-        from pymads.pymads import DnsServer
+        from pymads.server import DnsServer
 
     def test_import_error(self):
         from pymads.errors import DnsError
@@ -18,6 +18,7 @@ class TestImports(unittest.TestCase):
 
     def test_import_sources(self):
         from pymads.sources import pymadsfile
+        from pymads.sources.dict import DictSource
 
     def test_import_filters(self):
         from pymads.filters import pymadsrr

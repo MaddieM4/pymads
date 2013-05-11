@@ -24,7 +24,7 @@
 #     OTHER DEALINGS IN THE SOFTWARE.
 
 from __future__ import absolute_import
-from pymads.extern import ConfigParser
+
 import optparse
 import signal
 import socket
@@ -46,6 +46,7 @@ class DnsServer(object):
     def __init__(self, **kwargs):
         self.config = dict(default_config) # Clone
         self.config.update(kwargs) # Customize
+        self.serving = True
 
     def __repr__(self):
         return '<pymads dns serving on %s:%d>' % (self.listen_host, self.listen_port)
@@ -82,9 +83,11 @@ class DnsServer(object):
 
         udps = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udps.bind((self.listen_host, self.listen_port))
+        udps.settimeout(1)
+        self.socket = udps
         #ns_resource_records, ar_resource_records = compute_name_server_resources(_name_servers)
         ns_resource_records = ar_resource_records = []
-        while True:
+        while self.serving:
             try:
                 req_pkt, src_addr = udps.recvfrom(512)   # max UDP DNS pkt size
             except socket.error:
@@ -96,27 +99,30 @@ class DnsServer(object):
                 except:
                     exception_rcode = 1
                     raise Exception("could not parse query")
+
+                found = False
                 for chain in self.config['chains']:
-                    rcode, an_records = chain.get(req)
-                    resp = response.Response(req, rcode, an_records)
-                    resp_pkt = str(resp)
-                    found = True
-                    if self.debug:
-                        sys.stdout.write('Found %r' % req)
-                        sys.stdout.flush()
-                    break
+                    an_records = list(chain.get(req))
+                    if an_records:
+                        resp = response.Response(req, 0, an_records)
+                        resp_pkt = resp.export()
+                        found = True
+                        if self.debug:
+                            sys.stdout.write('Found %r' % req)
+                            sys.stdout.flush()
+                        break
                 if not found:
                     if self.debug:
                         sys.stderr.write('Unknown %r' % req)
                         sys.stderr.flush()
                     exception_rcode = 3
-                    raise Exception("query is not for our domain: %s" % ".".join(req.question))
+                    raise Exception("query is not for our domain: %r" % req)
             except:
                 if req.qid:
                     if exception_rcode is None:
                         exception_rcode = 2
                     resp = response.Response(req, exception_rcode)
-                    resp_pkt = str(resp)
+                    resp_pkt = resp.export()
                 else:
                     continue
             udps.sendto(resp_pkt, src_addr)
@@ -129,43 +135,15 @@ class DnsServer(object):
             ar.append({'qtype':1, 'qclass':1, 'ttl':ttl, 'rdata':struct.pack("!I", ip)})
         return ns, ar
 
+    def stop(self):
+        self.serving = False
+        if hasattr(self, 'socket'):
+            self.socket.close()
+
     def die(self, msg):
         """Just a msg wrapper"""
 
         sys.stderr.write(msg)
         sys.exit(-1)
 
-
-def main():
-
-    usage = '%prog [options] [config_files]\n\nconfig_files = One or more config files, defaults to "pymads.conf"'
-    parser = optparse.OptionParser(usage=usage)
-    parser.add_option('-p', '--port', dest='port', type=int, default=53,
-        help='Port to run the DNS server on (default: 53)')
-    parser.add_option('-i', '--ip', dest='ip', default='0.0.0.0',
-        help='IP to bind ourselved on to (default: 0.0.0.0)')
-    parser.add_option('-d', '--debug', dest='debug', default=False, action='store_true',
-        help='Debug mode, this may impact performance since it has to flush on every query')
-    (options, filenames) = parser.parse_args()
-
-    config_files = {}
-    if not filenames:
-        filenames = ['pymads.conf']
-    for f in filenames:
-        if f in config_files:
-            raise Exception("repeated configuration")
-        config_files[f] = {}
-
-    sys.stdout.write("%s starting on %s:%d\n" % (sys.argv[0], options.ip, options.port))
-    dns = DnsServer(config_files=config_files, listen_port=options.port, listen_host=options.ip)
-    dns.set_debug(options.debug)
-    signal.signal(signal.SIGHUP, dns.reread)
-    for config in config_files.values():
-        sys.stdout.write("%s: serving for domain %s\n" % (sys.argv[0], ".".join(config['domain'])))
-    sys.stdout.flush()
-    sys.stderr.flush()
-    dns.serve()
-
-if __name__ == "__main__":
-    sys.exit(main())
-
+# TODO : Write an appropriate __main__ function

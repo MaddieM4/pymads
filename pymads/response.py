@@ -14,7 +14,7 @@ class Response(object):
         self.ar_records = ar_records
         self.ns_records = ns_records
 
-    def __str__(self):
+    def export(self):
         """Formats the packet response"""
         
         resources = []

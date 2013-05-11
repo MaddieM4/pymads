@@ -1,12 +1,17 @@
 import struct
 
+try:
+    bytes
+except:
+    bytes = str
+
 def label2str(label):
     s = struct.pack("!B", len(label))
     s += label
     return s
     
 def labels2str(labels):
-    s = ''
+    s = bytes()
     for label in labels:
         s += label2str(label)
     s += struct.pack("!B", 0)

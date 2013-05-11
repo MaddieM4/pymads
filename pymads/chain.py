@@ -8,7 +8,7 @@ class Chain(object):
         ''' Returns a generator '''
         results = set()
         for source in self.sources:
-            results.add( set(source.get(request)) ) 
+            results.update(source.get(request)) 
         for filt in self.filters:
             results = filt.process(results)
         return results

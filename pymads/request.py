@@ -6,7 +6,7 @@ from pymads.errors import *
 class Request(object):
     def __init__(self, qid, question, qtype, qclass, src_addr):
         self.qid      = qid
-        self.question = map(lambda x: x.lower(), question)
+        self.question = list(map(lambda x: x.lower(), question))
         self.qtype    = qtype
         self.qclass   = qclass
         self.src_addr = src_addr
@@ -18,7 +18,7 @@ class Request(object):
             self.qclass
         )
 
-def parse(query, src_addr):
+def parse(packet, src_addr):
     ''' Parse a text query and return a Request object '''
 
     hdr_len = 12
