@@ -4,6 +4,7 @@ import subprocess
 from pymads.extern import unittest
 from pymads.server import DnsServer
 from pymads.chain  import Chain
+from pymads.record import Record
 
 test_host = '127.0.0.1'
 test_port = 53000
@@ -33,13 +34,14 @@ class TestResolution(unittest.TestCase):
 
         hostname = 'example.com'
         ip_addr  = '9.9.9.9'
+        record   = Record(hostname, ip_addr)
 
-        source = DictSource({hostname: [('A', ip_addr)]})
+        source = DictSource({hostname: [record]})
         self.chain = Chain([source])
         self.server.config['chains'] = [self.chain]
         host_data = dig(hostname)
         self.assertIn(
-            hostname,
+            ip_addr,
             host_data
         )
 

@@ -25,6 +25,7 @@
 
 from __future__ import absolute_import
 
+import traceback
 import optparse
 import signal
 import socket
@@ -102,7 +103,7 @@ class DnsServer(object):
 
                 found = False
                 for chain in self.config['chains']:
-                    an_records = list(chain.get(req))
+                    an_records = list(chain.get(req.name))
                     if an_records:
                         resp = response.Response(req, 0, an_records)
                         resp_pkt = resp.export()
@@ -118,6 +119,7 @@ class DnsServer(object):
                     exception_rcode = 3
                     raise Exception("query is not for our domain: %r" % req)
             except:
+                traceback.print_exc(file=sys.stdout)
                 if req.qid:
                     if exception_rcode is None:
                         exception_rcode = 2

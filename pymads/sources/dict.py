@@ -5,12 +5,11 @@ class DictSource(object):
     Data format:
         {
             'mydomain.com' : [
-                ('A',  '7.7.7.7'),
-                ('NS', '7.7.7.8'),
+                <pymads.record.Record>
             ],
             'myotherdomain.com' : [
-                ('A',    '8.9.8.9'),
-                ('AAAA', 'fc99:76ad::0011'),
+                <pymads.record.Record>,
+                <pymads.record.Record>,
             ]
         }
     '''

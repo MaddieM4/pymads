@@ -3,6 +3,12 @@ from __future__ import absolute_import
 import struct
 from pymads.errors import *
 
+def stringify(obj):
+    if hasattr(obj, 'decode'):
+        return obj.decode()
+    else:
+        return str(obj)
+
 class Request(object):
     def __init__(self, qid, question, qtype, qclass, src_addr):
         self.qid      = qid
@@ -10,6 +16,10 @@ class Request(object):
         self.qtype    = qtype
         self.qclass   = qclass
         self.src_addr = src_addr
+
+    @property
+    def name(self):
+        return ".".join(stringify(x) for x in self.question)
 
     def __repr__(self):
         return "<request question=%s qtype=%s qclass=%s>" % (
