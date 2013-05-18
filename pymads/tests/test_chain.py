@@ -13,9 +13,26 @@ class TestChains(unittest.TestCase):
         record   = Record(hostname, ip_addr)
 
         source = DictSource({hostname: [record]})
-        self.chain = Chain([source])
+        chain  = Chain([source])
         self.assertEqual(
-            self.chain.get(hostname),
+            chain.get(hostname),
             set([record])
         )
-        self.assertEqual(self.chain.get('not'+hostname), set())
+        self.assertEqual(chain.get('not'+hostname), set())
+
+    def test_jsonsource(self):
+        from pymads.sources.json import JSONSource
+
+        path     = 'examples/sushi.json'
+        hostname = 'sushi.org'
+        ip_addr  = '5.4.3.2'
+
+        source  = JSONSource(path)
+        chain   = Chain([source])
+        results = chain.get(hostname)
+
+        self.assertEqual(
+            results.pop().rdata,
+            ip_addr
+        )
+        self.assertEqual(chain.get('not'+hostname), set())

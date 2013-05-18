@@ -14,8 +14,7 @@ class DictSource(object):
         }
     '''
     def __init__(self, data = {}):
-        self.data = {}
-        self.data.update(data)
+        self.data = dict(data)
 
     def get(self, domain):
         result = set()
