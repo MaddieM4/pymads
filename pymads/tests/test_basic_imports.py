@@ -17,7 +17,7 @@ class TestImports(unittest.TestCase):
         from pymads.response import Response
 
     def test_import_sources(self):
-        from pymads.sources import pymadsfile
+        from pymads.sources.json import JSONSource
         from pymads.sources.dict import DictSource
 
     def test_import_filters(self):
