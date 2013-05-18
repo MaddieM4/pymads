@@ -26,7 +26,6 @@
 from __future__ import absolute_import
 
 import traceback
-import optparse
 import signal
 import socket
 import struct
@@ -148,4 +147,45 @@ class DnsServer(object):
         sys.stderr.write(msg)
         sys.exit(-1)
 
-# TODO : Write an appropriate __main__ function
+def serve_standalone(*args):
+    '''
+    usage: server.py [options] <source_path>
+
+    Source path should be the location of a JSON file, or '-' for STDIN.
+
+    options:
+        -P, --listen-port PORT   Port to listen on         [default: 53]
+        -H, --listen-host HOST   Host address to listen on [default: 0.0.0.0]
+
+        -v --verbose             Verbose output
+        -d --debug               Debug mode
+        -h --help                Show help
+        --version                Show version and exit
+    '''
+    from docopt import docopt
+
+    from pymads.chain import Chain
+    from pymads.sources.json import JSONSource
+
+    options = docopt(serve_standalone.__doc__, argv=list(args), version='0.1.0')
+
+    config  = {}
+    config['listen_port'] = int(options['--listen-port'])
+    config['listen_host'] = options['--listen-host']
+    config['debug']       = options['--debug']
+
+    path    = options['<source_path>']
+    if path == '-':
+        fp = sys.STDIN
+    else:
+        fp = open(path)
+
+    source = JSONSource(fp)
+    chain  = Chain([source])
+    config['chains'] = [chain]
+
+    server = DnsServer(**config)
+    server.serve()
+
+if __name__ == '__main__':
+    serve_standalone(*sys.argv[1:])
