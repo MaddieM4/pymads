@@ -1,22 +1,13 @@
 import threading
-import subprocess
 
 from pymads.extern import unittest
 from pymads.server import DnsServer
 from pymads.chain  import Chain
 from pymads.record import Record
+from pymads.tests.dig import dig
 
 test_host = '127.0.0.1'
 test_port = 53000
-
-def dig(hostname):
-    sp = subprocess.Popen(
-        ['dig', '@' + test_host, '-p%d' % test_port, hostname, 'ANY'],
-        stdout = subprocess.PIPE,
-        stderr = subprocess.STDOUT,
-        universal_newlines = True
-    )
-    return sp.communicate()[0] # STDOUT
 
 class TestResolution(unittest.TestCase):
     ''' Full-stack integration test '''
@@ -39,7 +30,7 @@ class TestResolution(unittest.TestCase):
         source = DictSource({hostname: [record]})
         self.chain = Chain([source])
         self.server.config['chains'] = [self.chain]
-        host_data = dig(hostname)
+        host_data = dig(hostname, test_host, test_port)
         success_text = '''
 ;; ANSWER SECTION:
 %s.\t\t1800\tIN\tA\t%s
