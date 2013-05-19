@@ -3,12 +3,6 @@ from __future__ import absolute_import
 import struct
 from pymads import utils
 
-def byteify(obj):
-    try:
-        return bytes(obj, 'utf-8')
-    except:
-        return str(obj)
-
 class Response(object):
     """ Represents a response packet """
 
@@ -37,7 +31,7 @@ class Response(object):
         pkt =  self.format_header(num_an, num_ns, num_ar)
         pkt += self.format_question()
         for resource in resources:
-            pkt += self.format_resource(resource)
+            pkt += resource.export()
         return pkt
 
     def format_header(self, ancount, nscount, arcount):
@@ -68,17 +62,3 @@ class Response(object):
              self.request.qclass
         )
         return q
-
-    def format_resource(self, resource):
-        """Formats the resource fields to be used in the response packet"""
-
-        r  = utils.labels2str(self.request.question)
-        r += struct.pack(
-            "!HHIH",
-             resource.rtypecode,
-             resource.rclasscode,
-             resource.rttl,
-             len(resource.rdata)
-        )
-        r += byteify(resource.rdata)
-        return r

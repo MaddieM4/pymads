@@ -1,3 +1,5 @@
+import struct
+from pymads import utils
 
 class Record(object):
     ''' Represents a DNS record. '''
@@ -16,6 +18,7 @@ class Record(object):
         self.rtype  = rtype
         self.rttl   = int(rttl)
         self.rclass = rclass
+        self.rdata_formatted = self.format_rdata()
 
     @property
     def rtypecode(self):
@@ -33,6 +36,42 @@ class Record(object):
             self.rttl,
             self.rclass,
         ))
+
+    def format_rdata(self):
+        '''
+        Create the binary representation of the rdata for use in responses.
+        '''
+        # TODO : Support more special output types
+        if self.rtype == 'A':
+            segments = [int(x) for x in self.rdata.split('.')]
+            if bytes == str:
+                return bytes().join(chr(x) for x in segments)
+            else:
+                return bytes(segments)
+        else:
+            return byteify(self.rdata)
+
+    def export(self):
+        '''
+        Formats the resource fields to be used in the response packet.
+        '''
+
+        r  = utils.labels2str(byteify(x) for x in self.domain_name.split('.'))
+        r += struct.pack(
+            "!HHIH",
+             self.rtypecode,
+             self.rclasscode,
+             self.rttl,
+             len(self.rdata_formatted)
+        )
+        r += self.rdata_formatted
+        return r
+
+def byteify(obj):
+    try:
+        return bytes(obj, 'utf-8')
+    except:
+        return str(obj)
 
 # http://edgedirector.com/app/type.htm
 
