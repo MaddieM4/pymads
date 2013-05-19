@@ -40,8 +40,13 @@ class TestResolution(unittest.TestCase):
         self.chain = Chain([source])
         self.server.config['chains'] = [self.chain]
         host_data = dig(hostname)
+        success_text = '''
+;; ANSWER SECTION:
+%s.\t\t1800\tIN\tA\t%s
+''' % (hostname, ip_addr)
+
         self.assertIn(
-            ip_addr,
+            success_text,
             host_data
         )
 
