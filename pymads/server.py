@@ -47,6 +47,7 @@ class DnsServer(object):
         self.config = dict(default_config) # Clone
         self.config.update(kwargs) # Customize
         self.serving = True
+        self.socket = None
 
     def __repr__(self):
         return '<pymads dns serving on %s:%d>' % (self.listen_host, self.listen_port)
@@ -78,13 +79,18 @@ class DnsServer(object):
         """Sets whether we are in debug mode"""
         self.config['debug'] = bool(debug)
 
+    def bind(self):
+        """Bind socket (allows privelege dropping between bind and service)"""
+        if not self.socket:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.socket.bind((self.listen_host, self.listen_port))
+            self.socket.settimeout(1)
+
     def serve(self):
         """Serves forever"""
 
-        udps = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udps.bind((self.listen_host, self.listen_port))
-        udps.settimeout(1)
-        self.socket = udps
+        self.bind()
+        udps = self.socket
         #ns_resource_records, ar_resource_records = compute_name_server_resources(_name_servers)
         ns_resource_records = ar_resource_records = []
         while self.serving:
