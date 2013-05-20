@@ -1,4 +1,5 @@
 import struct
+from socket import inet_pton, AF_INET, AF_INET6
 from pymads import utils
 
 class Record(object):
@@ -43,11 +44,9 @@ class Record(object):
         '''
         # TODO : Support more special output types
         if self.rtype == 'A':
-            segments = [int(x) for x in self.rdata.split('.')]
-            if bytes == str:
-                return bytes().join(chr(x) for x in segments)
-            else:
-                return bytes(segments)
+            return inet_pton(AF_INET, self.rdata)
+        elif self.rtype == 'AAAA':
+            return inet_pton(AF_INET6, self.rdata)
         else:
             return byteify(self.rdata)
 

@@ -20,26 +20,38 @@ class TestResolution(unittest.TestCase):
         self.thread = threading.Thread(target=self.server.serve)
         self.thread.start()
 
-    def test_ram_chain(self):
+    def do_test_record(self, record):
         from pymads.sources.dict import DictSource
 
-        hostname = 'example.com'
-        ip_addr  = '9.9.9.9'
-        record   = Record(hostname, ip_addr)
-
-        source = DictSource({hostname: [record]})
+        source = DictSource({record.domain_name: [record]})
         self.chain = Chain([source])
         self.server.config['chains'] = [self.chain]
-        host_data = dig(hostname, test_host, test_port)
+        host_data = dig(record.domain_name, test_host, test_port)
         success_text = '''
 ;; ANSWER SECTION:
-%s.\t\t1800\tIN\tA\t%s
-''' % (hostname, ip_addr)
+%s.\t\t%d\t%s\t%s\t%s
+''' % (record.domain_name, record.rttl, record.rclass, record.rtype, record.rdata)
 
         self.assertIn(
             success_text,
             host_data
         )
+
+    def test_A(self):
+        hostname = 'example.com'
+        ip_addr  = '9.9.9.9'
+        record   = Record(hostname, ip_addr)
+
+        self.do_test_record(record)
+
+    def test_AAAA(self):
+        record = Record(
+            'example.com',
+            'abcd::1234',
+            rtype = 'AAAA'
+        )
+
+        self.do_test_record(record)
 
     def tearDown(self):
         self.server.stop()
