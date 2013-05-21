@@ -24,6 +24,7 @@
 #     OTHER DEALINGS IN THE SOFTWARE.
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import traceback
 import signal
@@ -32,7 +33,7 @@ import struct
 import sys
 
 from pymads import utils, request, response
-from pymads.errors import *
+from pymads.errors import DnsError
 
 default_config = {
     'listen_host' : '0.0.0.0',
@@ -94,45 +95,56 @@ class DnsServer(object):
         #ns_resource_records, ar_resource_records = compute_name_server_resources(_name_servers)
         ns_resource_records = ar_resource_records = []
         while self.serving:
+            req = None
+            do_debug = False
+
             try:
                 req_pkt, src_addr = udps.recvfrom(512)   # max UDP DNS pkt size
             except socket.error:
                 continue
+
             try:
-                exception_rcode = None
+
+                # Inner try/catch to convert all exceptions to DnsError
                 try:
                     req = request.parse(req_pkt, src_addr)
-                except:
-                    exception_rcode = 1
-                    raise Exception("could not parse query")
+                    resp_pkt = self.serve_one(req)
 
-                found = False
-                for chain in self.config['chains']:
-                    an_records = list(chain.get(req.name))
-                    if an_records:
-                        resp = response.Response(req, 0, an_records)
-                        resp_pkt = resp.export()
-                        found = True
-                        if self.debug:
-                            sys.stdout.write('Found %r' % req)
-                            sys.stdout.flush()
-                        break
-                if not found:
+                except Exception as e:
                     if self.debug:
-                        sys.stderr.write('Unknown %r' % req)
-                        sys.stderr.flush()
-                    exception_rcode = 3
-                    raise Exception("query is not for our domain: %r" % req)
-            except:
-                traceback.print_exc(file=sys.stdout)
-                if req.qid:
-                    if exception_rcode is None:
-                        exception_rcode = 2
-                    resp = response.Response(req, exception_rcode)
-                    resp_pkt = resp.export()
-                else:
-                    continue
+                        traceback.print_exc(file=sys.stderr)
+                    if isinstance(e, DnsError):
+                        raise
+                    else:
+                        raise DnsError('SERVFAIL')
+
+            except DnsError as e:
+                if not req:
+                    # Attempt to salvage a little information
+                    if len(req_pkt) < 2:
+                        continue
+                    qid = struct.unpack(b'!H', req_pkt[:2])[0]
+                    req = request.Request(qid, [], 1, 1, src_addr)
+
+                resp = response.Response(req, e.code)
+                resp_pkt = resp.export()
+
             udps.sendto(resp_pkt, src_addr)
+
+    def serve_one(self, req):
+        for chain in self.config['chains']:
+            records = chain.get(req.name)
+            if records:
+                if self.debug:
+                    sys.stdout.write('Found %r' % req)
+                    sys.stdout.flush()
+                resp = response.Response(req, 0, records)
+                return resp.export()
+        # No records found
+        if self.debug:
+            sys.stderr.write('Unknown %r' % req)
+            sys.stderr.flush()
+        raise DnsError('NXDOMAIN', "query is not for our domain: %r" % req)
 
     def compute_name_server_resources(self, name_servers):
         ns = []
