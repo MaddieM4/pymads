@@ -95,7 +95,7 @@ class TestResolution(unittest.TestCase):
 
         self.chain = Chain([BadSource()])
         self.server.config['chains'] = [self.chain]
-        self.server.guard.quiet()
+        self.server.debug = False
         host_data = dig('sushi.org', test_host, test_port)
         self.assertIn(
             'SERVFAIL',

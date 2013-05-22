@@ -90,7 +90,6 @@ class DnsServer(object):
         ns_resource_records = ar_resource_records = []
         while self.serving:
             req = None
-            do_debug = False
 
             try:
                 req_pkt, src_addr = udps.recvfrom(512)   # max UDP DNS pkt size
@@ -98,7 +97,7 @@ class DnsServer(object):
                 continue
 
             try:
-                with self.guard:
+                with self.guard.quiet(not self.debug):
                     req = request.parse(req_pkt, src_addr)
                     resp_pkt = self.serve_one(req)
 

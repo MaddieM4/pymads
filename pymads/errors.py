@@ -44,8 +44,8 @@ class ErrorConverter(object):
         else:
             self.tb_stream = tb_stream
 
-    def quiet(self):
-        self._quiet = True
+    def quiet(self, value = True):
+        self._quiet = value
         return self
 
     def __enter__(self):
