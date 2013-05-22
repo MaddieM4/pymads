@@ -15,6 +15,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
+import traceback
+
 class DnsError(Exception):
     def __init__(self, errtype, *args):
         if isinstance(errtype, int):
@@ -24,6 +26,32 @@ class DnsError(Exception):
             self.error = errtype
             self.code  = get_error_code(self.error)
         Exception.__init__(self, self.error, self.code, *args)
+
+class ErrorConverter(object):
+    '''
+    Converts all non-DnsError exceptions to DnsError exceptions.
+    '''
+    def __init__(self, args, tb_stream='stderr'):
+        '''
+        These args are used as the first args in the DnsError constructor
+        whenever we convert a non-DnsError exception to a DnsError.
+        '''
+        self.args = args
+        if isinstance(tb_stream, str):
+            import sys
+            self.tb_stream = getattr(sys, tb_stream)
+        else:
+            self.tb_stream = tb_stream
+
+    def __enter__():
+        pass
+
+    def __exit__(exc_type, exc_val, exc_tb):
+        if exc_type and not isinstance(exc_val, DnsError):
+            if self.tb_stream:
+                traceback.print_exc(file=self.tb_stream)
+            new_args = self.args + exc_val.args
+            raise DnsError(new_args)
 
 def get_error_name(code):
     '''

@@ -20,6 +20,8 @@ from __future__ import absolute_import
 import struct
 from pymads.errors import *
 
+ParseGaurd = ErrorConverter(['FORMERR', 'Unknown parsing error'])
+
 def stringify(obj):
     if hasattr(obj, 'decode'):
         return obj.decode()
@@ -48,7 +50,7 @@ class Request(object):
 def parse(packet, src_addr):
     ''' Parse a text query and return a Request object '''
 
-    try:
+    with ParseGuard:
         hdr_len = 12
         header = packet[:hdr_len]
         qid, flags, qdcount, _, _, _ = struct.unpack('!HHHHHH', header)
@@ -72,11 +74,6 @@ def parse(packet, src_addr):
             offset += label_len
             labels.append(label)
         qtype, qclass= struct.unpack("!HH", body[offset:offset+4])
-    except Exception as e:
-        if isinstance(e, DnsError):
-            raise
-        else:
-            raise DnsError("FORMERR", "Unknown request parsing error")
     if qclass != 1:
         raise DnsError('FORMERR', "Invalid class: " + qclass)
     return Request(qid, labels, qtype, qclass, src_addr)
