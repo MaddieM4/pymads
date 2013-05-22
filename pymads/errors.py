@@ -78,7 +78,7 @@ def get_error_name(code):
     '''
     if code < 0 or code > 0xe:
         raise ValueError("Code %d out of range (0-14)")
-    for (key, value) in ERROR_CODES.iteritems():
+    for (key, value) in ERROR_CODES.items():
         if value == code:
             return key
 
