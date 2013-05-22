@@ -20,7 +20,7 @@ from __future__ import absolute_import
 import struct
 from pymads.errors import *
 
-ParseGaurd = ErrorConverter(['FORMERR', 'Unknown parsing error'])
+ParseGuard = ErrorConverter(['FORMERR'])
 
 def stringify(obj):
     if hasattr(obj, 'decode'):

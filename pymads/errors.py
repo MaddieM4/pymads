@@ -36,22 +36,35 @@ class ErrorConverter(object):
         These args are used as the first args in the DnsError constructor
         whenever we convert a non-DnsError exception to a DnsError.
         '''
-        self.args = args
+        self.args = tuple(args)
         if isinstance(tb_stream, str):
             import sys
             self.tb_stream = getattr(sys, tb_stream)
         else:
             self.tb_stream = tb_stream
 
-    def __enter__():
+    def __enter__(self):
         pass
 
-    def __exit__(exc_type, exc_val, exc_tb):
-        if exc_type and not isinstance(exc_val, DnsError):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if not exc_type:
+            return
+
+        if isinstance(exc_val, exc_type):
+            e = exc_val
+        else:
+            e = exc_type(exc_val)
+
+        if not isinstance(exc_val, DnsError):
             if self.tb_stream:
-                traceback.print_exc(file=self.tb_stream)
-            new_args = self.args + exc_val.args
-            raise DnsError(new_args)
+                traceback.print_exception(
+                    exc_type,
+                    exc_val,
+                    exc_tb,
+                    file=self.tb_stream
+                )
+            new_args = self.args + e.args
+            raise DnsError(*new_args)
 
 def get_error_name(code):
     '''
