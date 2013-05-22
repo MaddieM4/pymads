@@ -36,17 +36,23 @@ class ErrorConverter(object):
         These args are used as the first args in the DnsError constructor
         whenever we convert a non-DnsError exception to a DnsError.
         '''
-        self.args = tuple(args)
+        self.args  = tuple(args)
+        self._quiet = False
         if isinstance(tb_stream, str):
             import sys
             self.tb_stream = getattr(sys, tb_stream)
         else:
             self.tb_stream = tb_stream
 
+    def quiet(self):
+        self._quiet = True
+        return self
+
     def __enter__(self):
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        quiet, self._quiet = self._quiet, False
         if not exc_type:
             return
 
@@ -56,7 +62,7 @@ class ErrorConverter(object):
             e = exc_type(exc_val)
 
         if not isinstance(exc_val, DnsError):
-            if self.tb_stream:
+            if self.tb_stream and not quiet:
                 traceback.print_exception(
                     exc_type,
                     exc_val,

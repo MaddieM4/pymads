@@ -88,6 +88,20 @@ class TestResolution(unittest.TestCase):
         self.setup_chain(record)
         self.do_test_record(record)
 
+    def test_error_SERVFAIL(self):
+        class BadSource(object):
+            def get(self, *args):
+                return 1/0
+
+        self.chain = Chain([BadSource()])
+        self.server.config['chains'] = [self.chain]
+        self.server.guard.quiet()
+        host_data = dig('sushi.org', test_host, test_port)
+        self.assertIn(
+            'SERVFAIL',
+            host_data
+        )
+
     def test_error_NXDOMAIN(self):
         '''
         Observe how server reacts when asked for something it doesn't know.

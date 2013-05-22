@@ -26,7 +26,7 @@ import struct
 import sys
 
 from pymads import utils, request, response
-from pymads.errors import DnsError
+from pymads.errors import DnsError, ErrorConverter
 
 default_config = {
     'listen_host' : '0.0.0.0',
@@ -38,10 +38,11 @@ default_config = {
 class DnsServer(object):
 
     def __init__(self, **kwargs):
-        self.config = dict(default_config) # Clone
+        self.config  = dict(default_config) # Clone
         self.config.update(kwargs) # Customize
         self.serving = True
-        self.socket = None
+        self.socket  = None
+        self.guard   = ErrorConverter(['SERVFAIL'])
 
     def __repr__(self):
         return '<pymads dns serving on %s:%d>' % (self.listen_host, self.listen_port)
@@ -97,19 +98,9 @@ class DnsServer(object):
                 continue
 
             try:
-
-                # Inner try/catch to convert all exceptions to DnsError
-                try:
+                with self.guard:
                     req = request.parse(req_pkt, src_addr)
                     resp_pkt = self.serve_one(req)
-
-                except Exception as e:
-                    if self.debug:
-                        traceback.print_exc(file=sys.stderr)
-                    if isinstance(e, DnsError):
-                        raise
-                    else:
-                        raise DnsError('SERVFAIL')
 
             except DnsError as e:
                 if not req:
