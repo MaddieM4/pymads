@@ -98,19 +98,14 @@ class DnsServer(object):
 
             try:
                 with self.guard.quiet(not self.debug):
-                    req = request.parse(req_pkt, src_addr)
+                    req = request.Request(src_addr=src_addr)
+                    req.parse(req_pkt)
                     resp_pkt = self.serve_one(req)
 
             except DnsError as e:
-                if not req:
-                    # Attempt to salvage a little information
-                    if len(req_pkt) < 2:
-                        continue
-                    qid = struct.unpack(b'!H', req_pkt[:2])[0]
-                    req = request.Request(qid, [], 1, 1, src_addr)
-
-                resp = response.Response(req, e.code)
-                resp_pkt = resp.export()
+                if req.qid:
+                    resp = response.Response(req, e.code)
+                    resp_pkt = resp.export()
 
             udps.sendto(resp_pkt, src_addr)
 
