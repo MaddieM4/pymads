@@ -118,6 +118,7 @@ class DnsServer(object):
         self.serving = False
         if hasattr(self, 'socket'):
             self.socket.close()
+        self.queue.join()
 
     def die(self, msg):
         """Just a msg wrapper"""

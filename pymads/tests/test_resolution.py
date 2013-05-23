@@ -86,11 +86,6 @@ class TestResolution(unittest.TestCase):
         )
 
         self.setup_chain(record)
-        self.server.config['own_consumer'] = False
-        self.thread_cons = threading.Thread(
-            target=self.server._default_consumer.listen
-        )
-        self.thread_cons.start()
         self.do_test_record(record)
 
     def test_async(self):
@@ -102,6 +97,12 @@ class TestResolution(unittest.TestCase):
         record   = Record(hostname, ip_addr)
 
         self.setup_chain(record)
+        # Use the server's own default consumer, just in another thread
+        self.server.config['own_consumer'] = False
+        self.thread_cons = threading.Thread(
+            target=self.server._default_consumer.listen
+        )
+        self.thread_cons.start()
         self.do_test_record(record)
 
     def test_error_SERVFAIL(self):
