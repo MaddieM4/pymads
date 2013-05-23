@@ -75,6 +75,7 @@ class Consumer(object):
                 resp_pkt = resp.export()
 
         self.socket.sendto(resp_pkt, source)
+        self.queue.task_done()
 
     def make_response(self, req):
         for chain in self.server.config['chains']:

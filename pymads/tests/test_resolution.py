@@ -86,9 +86,29 @@ class TestResolution(unittest.TestCase):
         )
 
         self.setup_chain(record)
+        self.server.config['own_consumer'] = False
+        self.thread_cons = threading.Thread(
+            target=self.server._default_consumer.listen
+        )
+        self.thread_cons.start()
+        self.do_test_record(record)
+
+    def test_async(self):
+        '''
+        Run server and consumer threads seperately.
+        '''
+        hostname = 'example.com'
+        ip_addr  = '9.9.9.9'
+        record   = Record(hostname, ip_addr)
+
+        self.setup_chain(record)
         self.do_test_record(record)
 
     def test_error_SERVFAIL(self):
+        '''
+        Observe how server reacts when a source completely fails with 
+        an exception.
+        '''
         class BadSource(object):
             def get(self, *args):
                 return 1/0
