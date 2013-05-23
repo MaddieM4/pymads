@@ -25,14 +25,18 @@ import socket
 import struct
 import sys
 
-from pymads import utils, request, response
-from pymads.errors import DnsError, ErrorConverter
+from pymads import utils 
+from pymads.consumer import Consumer
+from pymads.errors import ErrorConverter
+from pymads.extern import queue
 
 default_config = {
     'listen_host' : '0.0.0.0',
     'listen_port' : 53,
-    'debug' : False,
+    'debug'  : False,
     'chains' : [],
+    'queue_class' : queue.Queue,
+    'own_consumer': True, # Set to False for multithread/extern consumer
 }
 
 class DnsServer(object):
@@ -43,6 +47,8 @@ class DnsServer(object):
         self.serving = True
         self.socket  = None
         self.guard   = ErrorConverter(['SERVFAIL'])
+        self.queue   = self.config['queue_class']()
+        self._default_consumer = Consumer(self)
 
     def __repr__(self):
         return '<pymads dns serving on %s:%d>' % (self.listen_host, self.listen_port)
@@ -96,33 +102,9 @@ class DnsServer(object):
             except socket.error:
                 continue
 
-            try:
-                with self.guard.quiet(not self.debug):
-                    req = request.Request(src_addr=src_addr)
-                    req.parse(req_pkt)
-                    resp_pkt = self.serve_one(req)
-
-            except DnsError as e:
-                if req.qid:
-                    resp = response.Response(req, e.code)
-                    resp_pkt = resp.export()
-
-            udps.sendto(resp_pkt, src_addr)
-
-    def serve_one(self, req):
-        for chain in self.config['chains']:
-            records = chain.get(req.name)
-            if records:
-                if self.debug:
-                    sys.stdout.write('Found %r' % req)
-                    sys.stdout.flush()
-                resp = response.Response(req, 0, records)
-                return resp.export()
-        # No records found
-        if self.debug:
-            sys.stderr.write('Unknown %r' % req)
-            sys.stderr.flush()
-        raise DnsError('NXDOMAIN', "query is not for our domain: %r" % req)
+            self.queue.put((req_pkt, src_addr))
+            if self.config['own_consumer']:
+                self._default_consumer.consume()
 
     def compute_name_server_resources(self, name_servers):
         ns = []
