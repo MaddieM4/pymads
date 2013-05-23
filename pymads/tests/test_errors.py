@@ -62,17 +62,21 @@ class TestConverter(unittest.TestCase):
         with self.assertRaises(DnsError) as assertion:
             with ErrorConverter((3,)).quiet():
                 return 1/0
-        
-        # Split into several parts - error messages differ by
-        # version of Python
+
+        # Determine normal args for this exception...
+        # varies by Python version
+        with self.assertRaises(ZeroDivisionError) as zdiv:
+            1/0
+        # Fuck Python 2.
+        if isinstance(zdiv.exception, Exception):
+            correct_args = zdiv.exception.args
+        else:
+            correct_args = (zdiv.exception,)
+
         exc = assertion.exception
-        self.assertIn(
-            "DnsError('NXDOMAIN', 3, '",
-            repr(exc)
-        )
-        self.assertIn(
-            "division or modulo by zero')",
-            repr(exc)
+        self.assertEquals(
+            ('NXDOMAIN', 3) + correct_args,
+            exc.args
         )
 
     def test_customerr(self):
