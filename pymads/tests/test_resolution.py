@@ -29,6 +29,8 @@ from pymads.tests.dig import dig
 test_host = '127.0.0.1'
 test_port = 53000
 
+test_host_ipv6 = ('::1', 0, 1)
+
 class TestResolution(unittest.TestCase):
     ''' Full-stack integration test '''
 
@@ -53,7 +55,7 @@ class TestResolution(unittest.TestCase):
         '''
         Test that a record is retrievable.
         '''
-        host_data = dig(record.domain_name, test_host, test_port)
+        host_data = self.dig(record.domain_name)
         success_text = '''
 ;; ANSWER SECTION:
 %s.\t\t%d\t%s\t%s\t%s
@@ -63,6 +65,9 @@ class TestResolution(unittest.TestCase):
             success_text,
             host_data
         )
+
+    def dig(self, domain_name):
+        return dig(domain_name, test_host, test_port)
 
     def test_A(self):
         '''
@@ -117,7 +122,7 @@ class TestResolution(unittest.TestCase):
         self.chain = Chain([BadSource()])
         self.server.config['chains'] = [self.chain]
         self.server.debug = False
-        host_data = dig('sushi.org', test_host, test_port)
+        host_data = self.dig('sushi.org')
         self.assertIn(
             'SERVFAIL',
             host_data
@@ -127,7 +132,7 @@ class TestResolution(unittest.TestCase):
         '''
         Observe how server reacts when asked for something it doesn't know.
         '''
-        host_data = dig('sushi.org', test_host, test_port)
+        host_data = self.dig('sushi.org')
         self.assertIn(
             '->>HEADER<<- opcode: QUERY, status: NXDOMAIN',
             host_data
@@ -136,6 +141,16 @@ class TestResolution(unittest.TestCase):
             'QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 0',
             host_data
         )
+
+    def make_socket(self):
+        '''
+        Make UDP socket for more manual testing than dig.
+        '''
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind((test_host, test_port + 1))
+        s.settimeout(1)
+        return s
 
     def test_error_FORMERR(self):
         '''
@@ -147,12 +162,11 @@ class TestResolution(unittest.TestCase):
 
         self.setup_chain(record)
 
-        import socket
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.bind((test_host, test_port + 1))
-        self.socket.settimeout(1)
-
-        self.socket.sendto(b'Random garbage', (test_host, test_port))
+        self.socket = self.make_socket()
+        self.socket.sendto(
+            b'Random garbage',
+            self.server.socket.getsockname()
+        )
         response = self.socket.recv(512)
 
         if str == bytes:
@@ -168,3 +182,36 @@ class TestResolution(unittest.TestCase):
     def tearDown(self):
         self.server.stop()
         self.thread.join(2)
+        if hasattr(self, 'socket'):
+            self.socket.close()
+
+class TestResolutionIPv6(TestResolution):
+    ''' Full-stack integration test - IPv6 '''
+
+    def setUp(self):
+        self.server = DnsServer(
+                                listen_host = test_host_ipv6,
+                                listen_port = test_port,
+                      )
+        self.server.bind()
+        self.thread = threading.Thread(target=self.server.serve)
+        self.thread.start()
+
+    def dig(self, domain_name):
+        '''
+        IPv6 version of dig function.
+        '''
+        return dig(domain_name, test_host_ipv6[0], test_port)
+
+    def make_socket(self):
+        '''
+        IPv6 version of test socket construction.
+        '''
+        host, flow, scope = test_host_ipv6
+        addr = (host, test_port+1, flow, scope)
+
+        import socket
+        s = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        s.bind(addr)
+        s.settimeout(1)
+        return s

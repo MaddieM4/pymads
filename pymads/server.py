@@ -83,8 +83,13 @@ class DnsServer(object):
     def bind(self):
         """Bind socket (allows privelege dropping between bind and service)"""
         if not self.socket:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.socket.bind((self.listen_host, self.listen_port))
+            if isinstance(self.listen_host, tuple):
+                host, flow, scope = self.listen_host
+                self.socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+                self.socket.bind((host, self.listen_port, flow, scope))
+            else:
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                self.socket.bind((self.listen_host, self.listen_port))
             self.socket.settimeout(1)
 
     def serve(self):
