@@ -66,13 +66,13 @@ class Consumer(object):
         try:
             with self.guard.quiet(not self.debug):
                 req = request.Request(src_addr=source)
-                req.parse(packet)
+                req.unpack(packet)
                 resp_pkt = self.make_response(req)
 
         except DnsError as e:
             if req.qid:
                 resp = response.Response(req, e.code)
-                resp_pkt = resp.export()
+                resp_pkt = resp.pack()
 
         self.socket.sendto(resp_pkt, source)
         self.queue.task_done()
@@ -85,7 +85,7 @@ class Consumer(object):
                     sys.stdout.write('Found %r' % req)
                     sys.stdout.flush()
                 resp = response.Response(req, 0, records)
-                return resp.export()
+                return resp.pack()
         # No records found
         if self.debug:
             sys.stderr.write('Unknown %r' % req)

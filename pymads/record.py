@@ -67,7 +67,7 @@ class Record(object):
         else:
             return byteify(self.rdata)
 
-    def export(self):
+    def pack(self):
         '''
         Formats the resource fields to be used in the response packet.
         '''

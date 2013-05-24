@@ -31,7 +31,7 @@ class Response(object):
         self.ns_records = [r for r in records if r.rtype == 'NS']
         self.ar_records = [] # TODO
 
-    def export(self):
+    def pack(self):
         """Formats the packet response"""
         
         resources = []
@@ -48,7 +48,7 @@ class Response(object):
         pkt =  self.format_header(num_an, num_ns, num_ar)
         pkt += self.format_question()
         for resource in resources:
-            pkt += resource.export()
+            pkt += resource.pack()
         return pkt
 
     def format_header(self, ancount, nscount, arcount):

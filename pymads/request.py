@@ -55,7 +55,7 @@ class Request(object):
             self.qclass
         )
 
-    def parse(self, packet):
+    def unpack(self, packet):
         ''' Parse a text query and return a Request object '''
 
         with ParseGuard:
