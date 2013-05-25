@@ -18,6 +18,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 from __future__ import absolute_import
 
 import struct
+from pymads import utils
 from pymads.errors import *
 
 HEADER_LENGTH = 12
@@ -37,14 +38,14 @@ class Packet(object):
             question=[],
             qtype=1,
             qclass=1,
-            src_addr=tuple()
+            records=[]
         ):
         self.qid      = qid
         self.flags    = flags
         self.question = question
         self.qtype    = qtype
         self.qclass   = qclass
-        self.src_addr = src_addr
+        self.records  = records
 
     @property
     def question(self):
@@ -61,6 +62,17 @@ class Packet(object):
     @name.setter
     def name(self, value):
         self.question = value.split('.')
+
+    @property
+    def records(self):
+        return self._records
+
+    @records.setter
+    def records(self, value):
+        self._records = list(value)
+        self.an_records = [r for r in self._records if r.rtype != 'NS']
+        self.ns_records = [r for r in self._records if r.rtype == 'NS']
+        self.ar_records = []
 
     # Flags data ------------------------------------------
 
@@ -82,6 +94,15 @@ class Packet(object):
     def flag_opcode(self, value):
         self.setflag(11, 0xf, value)
 
+    # Unknown flag 10
+    @property
+    def flag_response(self):
+        return self.getflag(10, 0x1)
+
+    @flag_response.setter
+    def flag_response(self, value):
+        self.setflag(10, 0x1, value)
+
     # rd : Cargo culting for now (TODO : RESEARCH)
     @property
     def flag_rd(self):
@@ -94,11 +115,11 @@ class Packet(object):
     # rcode : Response code
     @property
     def flag_rcode(self):
-        return self.getflag(0, 0x1)
+        return self.getflag(0, 0xf)
 
     @flag_rcode.setter
     def flag_rcode(self, value):
-        self.setflag(0, 0x1, value)
+        self.setflag(0, 0xf, value)
 
     def getflag(self, position, size):
         return (self.flags >> position) & size
@@ -108,11 +129,7 @@ class Packet(object):
         mask  = 0xffff - (size << position)
         self.flags = (self.flags & mask) | (value << position)
 
-    def __repr__(self):
-        return "<packet qid=%d from %r>" % (
-            self.qid,
-            self.src_addr
-        )
+    # Packing and unpacking -------------------------------
 
     def pack(self):
         ''' Return packet string for request '''
@@ -121,7 +138,7 @@ class Packet(object):
         num_an = len(self.an_records)
         num_ns = num_ar = 0
 
-        if self.code == 0:
+        if self.flag_rcode == 0:
             resources.extend(self.ns_records)
             resources.extend(self.ar_records)
             num_ns = len(self.ns_records)
@@ -132,6 +149,33 @@ class Packet(object):
         for resource in resources:
             pkt += resource.pack()
         return pkt
+
+    def pack_header(self, ancount, nscount, arcount):
+        """Formats the header to be used in the response packet"""
+
+        qdcount = 1
+
+        hdr = struct.pack(
+            "!HHHHHH",
+            self.qid,
+            self.flags,
+            qdcount,
+            ancount,
+            nscount,
+            arcount
+        )
+        return hdr
+
+    def pack_question(self):
+        """Formats the question field to be used in the response packet"""
+
+        q = utils.labels2str(self.question)
+        q += struct.pack(
+            "!HH",
+             self.qtype,
+             self.qclass
+        )
+        return q
 
     def unpack(self, packet):
         ''' Parse a DNS packet and set object properties from it '''
@@ -166,3 +210,10 @@ class Packet(object):
             labels.append(label)
         self.qtype, self.qclass= struct.unpack("!HH", body[offset:offset+4])
         self.question = labels
+
+    # Misc ------------------------------------------------
+
+    def __repr__(self):
+        return "<packet qid=%d>" % (
+            self.qid
+        )

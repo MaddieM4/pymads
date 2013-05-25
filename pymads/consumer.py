@@ -65,13 +65,13 @@ class Consumer(object):
 
         try:
             with self.guard.quiet(not self.debug):
-                req = request.Request(src_addr=source)
+                req = request.Request()
                 req.unpack(packet)
                 resp_pkt = self.make_response(req)
 
         except DnsError as e:
             if req.qid:
-                resp = response.Response(req, e.code)
+                resp = req.respond(e.code)
                 resp_pkt = resp.pack()
             else:
                 self.queue.task_done()
@@ -87,7 +87,7 @@ class Consumer(object):
                 if self.debug:
                     sys.stdout.write('Found %r' % req)
                     sys.stdout.flush()
-                resp = response.Response(req, 0, records)
+                resp = req.respond(0, records)
                 return resp.pack()
         # No records found
         if self.debug:

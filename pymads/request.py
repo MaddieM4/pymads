@@ -18,15 +18,25 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 from __future__ import absolute_import
 
 from pymads.packet import Packet
+from pymads.response import Response
 
 class Request(Packet):
-    def __init__(self, qid=0, question=[], qtype=1, qclass=1, src_addr=tuple()):
+    def __init__(self, qid=0, question=[], qtype=1, qclass=1):
         Packet.__init__(self,
             qid=qid,
             question=question,
             qtype=qtype,
             qclass=qclass,
-            src_addr=src_addr
+        )
+
+    def respond(self, code=0, records=[]):
+        return Response(
+            self.qid,
+            self.question,
+            self.qtype,
+            self.qclass,
+            code,
+            records
         )
 
     def __repr__(self):
