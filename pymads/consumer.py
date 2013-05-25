@@ -73,6 +73,9 @@ class Consumer(object):
             if req.qid:
                 resp = response.Response(req, e.code)
                 resp_pkt = resp.pack()
+            else:
+                self.queue.task_done()
+                return
 
         self.socket.sendto(resp_pkt, source)
         self.queue.task_done()

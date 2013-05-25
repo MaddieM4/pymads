@@ -17,36 +17,17 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 
 from __future__ import absolute_import
 
-import struct
-from pymads.errors import *
+from pymads.packet import Packet
 
-ParseGuard = ErrorConverter(['FORMERR'])
-
-def stringify(obj):
-    if hasattr(obj, 'decode'):
-        return obj.decode()
-    else:
-        return str(obj)
-
-class Request(object):
+class Request(Packet):
     def __init__(self, qid=0, question=[], qtype=1, qclass=1, src_addr=tuple()):
-        self.qid      = qid
-        self.question = question
-        self.qtype    = qtype
-        self.qclass   = qclass
-        self.src_addr = src_addr
-
-    @property
-    def question(self):
-        return self._question
-
-    @question.setter
-    def question(self, value):
-        self._question = list(map(lambda x: x.lower(), value))
-
-    @property
-    def name(self):
-        return ".".join(stringify(x) for x in self.question)
+        Packet.__init__(self,
+            qid=qid,
+            question=question,
+            qtype=qtype,
+            qclass=qclass,
+            src_addr=src_addr
+        )
 
     def __repr__(self):
         return "<request question=%s qtype=%s qclass=%s>" % (
@@ -56,32 +37,6 @@ class Request(object):
         )
 
     def unpack(self, packet):
-        ''' Parse a text query and return a Request object '''
-
-        with ParseGuard:
-            hdr_len = 12
-            header = packet[:hdr_len]
-            self.qid, flags, qdcount, _, _, _ = struct.unpack('!HHHHHH', header)
-            qr = (flags >> 15) & 0x1
-            opcode = (flags >> 11) & 0xf
-            rd = (flags >> 8) & 0x1
-            #print "qid", qid, "qdcount", qdcount, "qr", qr, "opcode", opcode, "rd", rd
-            if qr != 0 or opcode != 0 or qdcount == 0:
-                raise DnsError('FORMERR', "Invalid query")
-            body = packet[hdr_len:]
-            labels = []
-            offset = 0
-            while True:
-                label_len, = struct.unpack('!B', body[offset:offset+1])
-                offset += 1
-                if label_len & 0xc0:
-                    raise DnsError('FORMERR', "Invalid label length %d" % label_len)
-                if label_len == 0:
-                    break
-                label = body[offset:offset+label_len]
-                offset += label_len
-                labels.append(label)
-            self.qtype, self.qclass= struct.unpack("!HH", body[offset:offset+4])
-            self.question = labels
-        if self.qclass != 1:
-            raise DnsError('FORMERR', "Invalid class: " + qclass)
+        Packet.unpack(self, packet)
+        if self.flag_qr != 0 or self.flag_opcode != 0 or self.qdcount == 0:
+            raise DnsError('FORMERR', "Invalid query")
