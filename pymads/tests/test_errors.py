@@ -6,35 +6,35 @@ class TestErrors(unittest.TestCase):
     def test_int_constructor(self):
         e = DnsError(0)
         self.assertEquals(e.code,  0)
-        self.assertEquals(e.error, 'NOERROR')
+        self.assertEquals(e.label, 'NOERROR')
 
         e = DnsError(1)
         self.assertEquals(e.code,  1)
-        self.assertEquals(e.error, 'FORMERR')
+        self.assertEquals(e.label, 'FORMERR')
 
         e = DnsError(5)
         self.assertEquals(e.code,  5)
-        self.assertEquals(e.error, 'REFUSED')
+        self.assertEquals(e.label, 'REFUSED')
 
         msg =  "You're gonna have one."
         e = DnsError(0xe, msg)
         self.assertEquals(e.code,  0xe)
-        self.assertEquals(e.error, 'BADTIME')
+        self.assertEquals(e.label, 'BADTIME')
         self.assertEquals(e.args, ('BADTIME', 0xe, msg))
 
     def test_str_constructor(self):
         e = DnsError('NOERROR')
         self.assertEquals(e.code, 0)
-        self.assertEquals(e.error, 'NOERROR')        
+        self.assertEquals(e.label, 'NOERROR')        
 
         e = DnsError('REFUSED')
         self.assertEquals(e.code,  5)
-        self.assertEquals(e.error, 'REFUSED')
+        self.assertEquals(e.label, 'REFUSED')
 
         msg =  "You're gonna have one."
         e = DnsError('BADTIME', msg)
         self.assertEquals(e.code,  0xe)
-        self.assertEquals(e.error, 'BADTIME')
+        self.assertEquals(e.label, 'BADTIME')
         self.assertEquals(e.args, ('BADTIME', 0xe, msg))
 
     def test_repr(self):

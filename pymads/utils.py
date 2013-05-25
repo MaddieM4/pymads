@@ -53,11 +53,14 @@ def str2labels(source):
         labels.append(label)
     return offset, labels
 
-def ipstr2int(ipstr):
-    ip = 0
-    i = 24
-    for octet in ipstr.split("."):
-        ip |= (int(octet) << i)
-        i -= 8
-    return ip
+def byteify(obj):
+    try:
+        return bytes(obj, 'utf-8')
+    except:
+        return str(obj)
 
+def stringify(obj):
+    if hasattr(obj, 'decode'):
+        return obj.decode()
+    else:
+        return str(obj)

@@ -18,6 +18,7 @@ import sys
 
 from pymads import request, response
 from pymads.errors import DnsError
+import traceback
 
 class Consumer(object):
     '''
@@ -70,12 +71,13 @@ class Consumer(object):
                 resp_pkt = self.make_response(req)
 
         except DnsError as e:
-            if req.qid:
+            try:
                 resp = req.respond(e.code)
                 resp_pkt = resp.pack()
-            else:
+            except:
                 self.queue.task_done()
-                return
+                traceback.print_exc()
+                raise
 
         self.socket.sendto(resp_pkt, source)
         self.queue.task_done()

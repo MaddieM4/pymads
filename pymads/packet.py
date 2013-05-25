@@ -18,18 +18,13 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 from __future__ import absolute_import
 
 import struct
+from pymads import const
 from pymads import utils
 from pymads.errors import *
 
 HEADER_LENGTH = 12
 
 ParseGuard = ErrorConverter(['FORMERR'])
-
-def stringify(obj):
-    if hasattr(obj, 'decode'):
-        return obj.decode()
-    else:
-        return str(obj)
 
 class Packet(object):
     def __init__(self, 
@@ -43,8 +38,8 @@ class Packet(object):
         self.qid      = qid
         self.flags    = flags
         self.question = question
-        self.qtype    = qtype
-        self.qclass   = qclass
+        self.qtype    = const.get_code(const.RECORD_TYPES, qtype)
+        self.qclass   = const.get_code(const.RECORD_TYPES, qclass)
         self.records  = records
 
     @property
@@ -57,11 +52,11 @@ class Packet(object):
 
     @property
     def name(self):
-        return ".".join(stringify(x) for x in self.question)
+        return ".".join(utils.stringify(x) for x in self.question)
 
     @name.setter
     def name(self, value):
-        self.question = value.split('.')
+        self.question = [utils.byteify(x) for x in value.split('.')]
 
     @property
     def records(self):

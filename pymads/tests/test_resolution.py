@@ -176,7 +176,7 @@ class TestResolution(unittest.TestCase):
 
         self.assertEqual(
             rcode,
-            get_error_code('FORMERR')
+            const.ERROR_CODES['FORMERR']
         )
 
     def tearDown(self):
