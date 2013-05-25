@@ -16,6 +16,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
 import struct
+from pymads.errors import DnsError
 
 try:
     bytes
@@ -33,6 +34,24 @@ def labels2str(labels):
         s += label2str(label)
     s += struct.pack("!B", 0)
     return s
+
+def str2labels(source):
+    '''
+    Returns (length, ['label','list'])
+    '''
+    labels = []
+    offset = 0
+    while True:
+        length, = struct.unpack('!B', source[offset:offset+1])
+        offset += 1
+        if length & 0xc0:
+            raise DnsError('FORMERR', "Invalid label length %d" % length)
+        if length == 0:
+            break
+        label = source[offset:offset+length]
+        offset += length
+        labels.append(label)
+    return offset, labels
 
 def ipstr2int(ipstr):
     ip = 0

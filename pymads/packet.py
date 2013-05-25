@@ -196,20 +196,8 @@ class Packet(object):
     def unpack_body(self, body):
         ''' Parse the body data of a DNS packet. '''
 
-        labels = []
-        offset = 0
-        while True:
-            label_len, = struct.unpack('!B', body[offset:offset+1])
-            offset += 1
-            if label_len & 0xc0:
-                raise DnsError('FORMERR', "Invalid label length %d" % label_len)
-            if label_len == 0:
-                break
-            label = body[offset:offset+label_len]
-            offset += label_len
-            labels.append(label)
+        offset, self.question = utils.str2labels(body)
         self.qtype, self.qclass= struct.unpack("!HH", body[offset:offset+4])
-        self.question = labels
 
     # Misc ------------------------------------------------
 

@@ -36,7 +36,7 @@ class Record(object):
         self.rtype  = rtype
         self.rttl   = int(rttl)
         self.rclass = rclass
-        self.rdata_formatted = self.format_rdata()
+        self.rdata_packed = self.pack_rdata()
 
     @property
     def rtypecode(self):
@@ -55,7 +55,7 @@ class Record(object):
             self.rclass,
         ))
 
-    def format_rdata(self):
+    def pack_rdata(self):
         '''
         Create the binary representation of the rdata for use in responses.
         '''
@@ -78,10 +78,23 @@ class Record(object):
              self.rtypecode,
              self.rclasscode,
              self.rttl,
-             len(self.rdata_formatted)
+             len(self.rdata_packed)
         )
-        r += self.rdata_formatted
+        r += self.rdata_packed
         return r
+
+    def unpack(self, source):
+        '''
+        Decodes data into instance properties
+        '''
+        offset, labels = utils.str2labels(source)
+        self.domain_name = '.'.join(labels)
+        self.rtypecode, self.rclasscode, self.rttl, rdata_len = struct.unpack("!HHIH", source[offset:offset+5])
+        offset += 5
+        self.rdata = self.unpack_rdata(
+            source[offset:offset+rdata_len]
+        )
+        return offset + rdata_len
 
 def byteify(obj):
     try:
