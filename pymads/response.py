@@ -31,7 +31,7 @@ class Response(Packet):
             records=records
         )
         self.flag_qr = True
-        self.flag_response = True
+        self.flag_aa = True
         self.flag_rcode = code
 
     def __repr__(self):

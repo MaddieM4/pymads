@@ -27,6 +27,13 @@ HEADER_LENGTH = 12
 
 ParseGuard = ErrorConverter(['FORMERR'])
 
+def flag_property(position, size, doc):
+    return property(
+        fget = lambda self: self.getflag(position, size),
+        fset = lambda self, value: self.setflag(position, size, value),
+        doc  = doc
+    )
+
 class Packet(object):
     def __init__(self, 
             qid=0,
@@ -72,50 +79,37 @@ class Packet(object):
 
     # Flags data ------------------------------------------
 
-    # qr : True if packet is a response
-    @property
-    def flag_qr(self):
-        return self.getflag(15, 0x1)
+    flag_qr = flag_property(15, 0x1,
+        'qr : True if packet is a response'
+    )
 
-    @flag_qr.setter
-    def flag_qr(self, value):
-        self.setflag(15, 0x1, value)
+    flag_opcode = flag_property(11, 0xf,
+        'opcode : Operation code'
+    )
 
-    # opcode : Operation code
-    @property
-    def flag_opcode(self):
-        return self.getflag(11, 0xf)
+    flag_aa = flag_property(10, 0x1,
+        'aa : Authoritative Answer'
+    )
 
-    @flag_opcode.setter
-    def flag_opcode(self, value):
-        self.setflag(11, 0xf, value)
+    flag_tc = flag_property(9, 0x1,
+        'tc : Packet was truncated by UDP max packet size (512)'
+    )
 
-    # Unknown flag 10
-    @property
-    def flag_response(self):
-        return self.getflag(10, 0x1)
+    flag_rd = flag_property(8, 0x1,
+        'rd : Recursion desired'
+    )
 
-    @flag_response.setter
-    def flag_response(self, value):
-        self.setflag(10, 0x1, value)
+    flag_ra = flag_property(7, 0x1,
+        'ra : Recursion available'
+    )
 
-    # rd : Cargo culting for now (TODO : RESEARCH)
-    @property
-    def flag_rd(self):
-        return self.getflag(8, 0xf)
+    flag_z = flag_property(4, 0x8,
+        'rcode : Response code'
+    )
 
-    @flag_rd.setter
-    def flag_rd(self, value):
-        self.setflag(8, 0xf, value)
-
-    # rcode : Response code
-    @property
-    def flag_rcode(self):
-        return self.getflag(0, 0xf)
-
-    @flag_rcode.setter
-    def flag_rcode(self, value):
-        self.setflag(0, 0xf, value)
+    flag_rcode = flag_property(0, 0xf,
+        'rcode : Response code'
+    )
 
     def getflag(self, position, size):
         return (self.flags >> position) & size
