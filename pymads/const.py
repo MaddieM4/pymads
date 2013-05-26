@@ -19,6 +19,7 @@ def get_label(table, value):
     if isinstance(value, int):
         return lookup_str(table, value)
     else:
+        value = str(value)
         if value in table:
             return value
         else:
@@ -28,12 +29,14 @@ def get_code(table, value):
     if isinstance(value, int):
         return value
     else:
+        value = str(value)
         return table[value]
 
 def lookup_str(table, code):
     for (key, value) in table.items():
         if value == code:
             return key
+    raise KeyError("Could not find label for code %r" % code)
 
 # http://edgedirector.com/app/type.htm
 

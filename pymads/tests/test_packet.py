@@ -53,3 +53,14 @@ class TestPacket(unittest.TestCase):
         req.name = "example.com"
 
         self.do_test_pack_cycle(req)
+
+    def test_cycle_response(self):
+        from pymads.request import Request
+        from pymads.record  import Record
+
+        req = Request(31, [], 'AAAA')
+        req.name = 'example.com'
+        rec = Record('example.com', '::1', 'AAAA')
+        resp = req.respond(0, [rec])
+
+        self.do_test_pack_cycle(resp)

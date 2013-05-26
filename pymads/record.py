@@ -16,7 +16,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
 import struct
-from socket import inet_pton, AF_INET, AF_INET6
+from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
 from pymads import const
 from pymads import utils
 
@@ -33,19 +33,44 @@ class Record(object):
             rclass      : Almost always IN for Internet.
         '''
         self.domain_name = domain_name
-        self.rdata  = rdata
-        self.rtype  = const.get_label(const.RECORD_TYPES, rtype)
+        self.rtype  = rtype
         self.rttl   = int(rttl)
-        self.rclass = const.get_label(const.RECORD_CLASSES, rclass)
+        self.rclass = rclass
+        # Set last because implicit packing depends on type and class
+        self.rdata  = rdata
+
+    @property
+    def rdata(self):
+        return self._rdata
+
+    @rdata.setter
+    def rdata(self, value):
+        self._rdata = value
         self.rdata_packed = self.pack_rdata()
 
     @property
+    def rtype(self):
+        return self._rtype
+
+    @rtype.setter
+    def rtype(self, value):
+        self._rtype = const.get_label(const.RECORD_TYPES, value)
+
+    @property
+    def rclass(self):
+        return self._rclass
+
+    @rclass.setter
+    def rclass(self, value):
+        self._rclass = const.get_label(const.RECORD_CLASSES, value)
+
+    @property
     def rtypecode(self):
-        return const.RECORD_TYPES[self.rtype]
+        return const.RECORD_TYPES[self._rtype]
 
     @property
     def rclasscode(self):
-        return const.RECORD_CLASSES[self.rclass]
+        return const.RECORD_CLASSES[self._rclass]
 
     def __hash__(self):
         return hash((
@@ -68,6 +93,17 @@ class Record(object):
         else:
             return utils.byteify(self.rdata)
 
+    def unpack_rdata(self, data):
+        '''
+        Decode binary rdata.
+        '''
+        if self.rtype == 'A':
+            return inet_ntop(AF_INET, data)
+        elif self.rtype == 'AAAA':
+            return inet_ntop(AF_INET6, data)
+        else:
+            return utils.stringify(data)
+
     def pack(self):
         '''
         Formats the resource fields to be used in the response packet.
@@ -89,9 +125,10 @@ class Record(object):
         Decodes data into instance properties
         '''
         offset, labels = utils.str2labels(source)
-        self.domain_name = '.'.join(labels)
-        self.rtypecode, self.rclasscode, self.rttl, rdata_len = struct.unpack("!HHIH", source[offset:offset+5])
-        offset += 5
+        self.domain_name = '.'.join(utils.stringify(x) for x in labels)
+
+        self.rtype, self.rclass, self.rttl, rdata_len = struct.unpack("!HHIH", source[offset:offset+10])
+        offset += 10
         self.rdata = self.unpack_rdata(
             source[offset:offset+rdata_len]
         )

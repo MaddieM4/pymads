@@ -20,6 +20,7 @@ from __future__ import absolute_import
 import struct
 from pymads import const
 from pymads import utils
+from pymads.record import Record
 from pymads.errors import *
 
 HEADER_LENGTH = 12
@@ -193,6 +194,15 @@ class Packet(object):
 
         offset, self.question = utils.str2labels(body)
         self.qtype, self.qclass= struct.unpack("!HH", body[offset:offset+4])
+        offset += 4
+
+        records = []
+        for _ in range(self.ancount + self.nscount + self.arcount):
+            # Read a record
+            rec = Record('','0.0.0.0')
+            offset += rec.unpack(body[offset:])
+            records.append(rec)
+        self.records = records
 
     # Misc ------------------------------------------------
 
