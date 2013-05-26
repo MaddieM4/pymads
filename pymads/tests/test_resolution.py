@@ -67,7 +67,8 @@ class TestResolution(unittest.TestCase):
         )
 
     def dig(self, domain_name):
-        return dig(domain_name, test_host, test_port)
+        return dig(domain_name, test_host, test_port,
+                     timeout=1, retry=0)
 
     def test_A(self):
         '''
@@ -201,7 +202,8 @@ class TestResolutionIPv6(TestResolution):
         '''
         IPv6 version of dig function.
         '''
-        return dig(domain_name, test_host_ipv6[0], test_port)
+        return dig(domain_name, test_host_ipv6[0], test_port,
+                     timeout=1, retry=0)
 
     def make_socket(self):
         '''

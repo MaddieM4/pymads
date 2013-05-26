@@ -17,9 +17,24 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 
 import subprocess
 
-def dig(hostname, test_host='localhost', test_port=53000):
+def dig(hostname,
+        test_host='localhost',
+        test_port=53000,
+        timeout=5,
+        retry=2,
+        qtype='ANY'
+       ):
+
     sp = subprocess.Popen(
-        ['dig', '@' + test_host, '-p%d' % test_port, hostname, 'ANY'],
+        [
+            'dig',
+            '@' + test_host,
+            '-p%d' % test_port,
+            '+time=%d' % timeout,
+            '+retry=%d' % retry,
+            hostname,
+            qtype
+        ],
         stdout = subprocess.PIPE,
         stderr = subprocess.STDOUT,
         universal_newlines = True
