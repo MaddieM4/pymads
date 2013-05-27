@@ -47,7 +47,7 @@ def str2labels(source, offset=0):
             offset = pointer & (0xff-0xc0)
             if offset > len(source):
                 raise DnsError('FORMERR', 'Bad pointer')
-            continue
+            return offset+2, str2labels(source, pointer)[1]
         offset += 1
         if length == 0:
             break
