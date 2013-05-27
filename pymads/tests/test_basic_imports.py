@@ -33,6 +33,9 @@ class TestImports(unittest.TestCase):
     def test_import_response(self):
         from pymads.response import Response
 
+    def test_import_packet(self):
+        from pymads.packet import Packet
+
     def test_import_sources(self):
         from pymads.sources.json import JSONSource
         from pymads.sources.dict import DictSource
