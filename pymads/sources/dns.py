@@ -72,8 +72,6 @@ class DnsSource(object):
 
         resp = self.exchange(req)
         if resp.flag_rcode != 0:
-            print('Error occurred: %r' % resp)
-            return set()
+            raise Exception("Query failed with code %d" % resp.flag_rcode)
         else:
-            print('Success: %r' % resp)
             return set(resp.records)

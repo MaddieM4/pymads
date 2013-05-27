@@ -44,8 +44,8 @@ def str2labels(source, offset=0):
         length, = struct.unpack('!B', source[offset:offset+1])
         if length & 0xc0:
             pointer, = struct.unpack('!H', source[offset:offset+2])
-            offset = pointer & (0xff-0xc0)
-            if offset > len(source):
+            pointer = pointer & (0xff-0xc0)
+            if pointer > len(source):
                 raise DnsError('FORMERR', 'Bad pointer')
             return offset+2, str2labels(source, pointer)[1]
         offset += 1

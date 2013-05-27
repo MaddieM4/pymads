@@ -81,6 +81,15 @@ class Record(object):
             self.rclass,
         ))
 
+    def __repr__(self):
+        return "<record for %s: %d %s %s %s>" % (
+            self.domain_name,
+            self.rttl,
+            self.rtype,
+            self.rclass,
+            self.rdata,
+        )
+
     def pack_rdata(self):
         '''
         Create the binary representation of the rdata for use in responses.
