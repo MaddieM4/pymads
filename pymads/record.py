@@ -120,11 +120,11 @@ class Record(object):
         r += self.rdata_packed
         return r
 
-    def unpack(self, source):
+    def unpack(self, source, offset=0):
         '''
         Decodes data into instance properties
         '''
-        offset, labels = utils.str2labels(source)
+        offset, labels = utils.str2labels(source, offset)
         self.domain_name = '.'.join(utils.stringify(x) for x in labels)
 
         self.rtype, self.rclass, self.rttl, rdata_len = struct.unpack("!HHIH", source[offset:offset+10])

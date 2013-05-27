@@ -39,6 +39,7 @@ class TestImports(unittest.TestCase):
     def test_import_sources(self):
         from pymads.sources.json import JSONSource
         from pymads.sources.dict import DictSource
+        from pymads.sources.dns  import DnsSource
 
     def test_import_filters(self):
         from pymads.filters import pymadsrr

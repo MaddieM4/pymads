@@ -35,17 +35,20 @@ def labels2str(labels):
     s += struct.pack("!B", 0)
     return s
 
-def str2labels(source):
+def str2labels(source, offset=0):
     '''
     Returns (length, ['label','list'])
     '''
     labels = []
-    offset = 0
     while True:
         length, = struct.unpack('!B', source[offset:offset+1])
-        offset += 1
         if length & 0xc0:
-            raise DnsError('FORMERR', "Invalid label length %d" % length)
+            pointer, = struct.unpack('!H', source[offset:offset+2])
+            offset = pointer & (0xff-0xc0)
+            if offset > len(source):
+                raise DnsError('FORMERR', 'Bad pointer')
+            continue
+        offset += 1
         if length == 0:
             break
         label = source[offset:offset+length]

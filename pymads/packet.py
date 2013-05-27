@@ -171,30 +171,30 @@ class Packet(object):
         ''' Parse a DNS packet and set object properties from it '''
 
         with ParseGuard:
-            self.unpack_header(packet[:HEADER_LENGTH])
-            self.unpack_body(packet[HEADER_LENGTH:])
+            self.unpack_header(packet)
+            self.unpack_body(packet)
         if self.qclass != 1:
             raise DnsError('FORMERR', "Invalid class: " + qclass)
 
-    def unpack_header(self, header):
+    def unpack_header(self, packet):
         ''' Parse the header data of a DNS packet. '''
 
-        if len(header) != HEADER_LENGTH:
-            raise ValueError("Expected 12 byte header, got %r" % header)
-        self.qid, self.flags, self.qdcount, self.ancount, self.nscount, self.arcount = struct.unpack('!HHHHHH', header)
+        if len(packet) < HEADER_LENGTH:
+            raise ValueError("Expected 12 byte header, got %r" % packet)
+        self.qid, self.flags, self.qdcount, self.ancount, self.nscount, self.arcount = struct.unpack('!HHHHHH', packet[:HEADER_LENGTH])
 
-    def unpack_body(self, body):
+    def unpack_body(self, packet):
         ''' Parse the body data of a DNS packet. '''
 
-        offset, self.question = utils.str2labels(body)
-        self.qtype, self.qclass= struct.unpack("!HH", body[offset:offset+4])
+        offset, self.question = utils.str2labels(packet, HEADER_LENGTH)
+        self.qtype, self.qclass= struct.unpack("!HH", packet[offset:offset+4])
         offset += 4
 
         records = []
         for _ in range(self.ancount + self.nscount + self.arcount):
             # Read a record
             rec = Record('','0.0.0.0')
-            offset += rec.unpack(body[offset:])
+            offset = rec.unpack(packet, offset)
             records.append(rec)
         self.records = records
 
