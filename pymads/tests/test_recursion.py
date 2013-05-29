@@ -15,29 +15,18 @@ You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
-import subprocess
+from __future__ import unicode_literals
 
-def dig(hostname,
-        test_host='localhost',
-        test_port=53000,
-        timeout=5,
-        retry=2,
-        qtype='ANY',
-        extra=[]
-       ):
+from pymads.extern import unittest
+from pymads.sources.dns import DnsSource
 
-    sp = subprocess.Popen(
-        [
-            'dig',
-            '@' + test_host,
-            '-p%d' % test_port,
-            '+time=%d' % timeout,
-            '+retry=%d' % retry,
-            hostname,
-            qtype
-        ] + extra,
-        stdout = subprocess.PIPE,
-        stderr = subprocess.STDOUT,
-        universal_newlines = True
-    )
-    return sp.communicate()[0] # STDOUT
+class TestRecursion(unittest.TestCase):
+    def setUp(self):
+        self.source = DnsSource() # Uses 8.8.8.8 by default
+
+    def test_recursion(self):
+        google = self.source.get('google.com')
+
+        self.assertTrue(len(google) > 0)
+        for record in google:
+            self.assertEqual(record.domain_name, 'google.com')

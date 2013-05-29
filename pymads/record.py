@@ -97,21 +97,37 @@ class Record(object):
         # TODO : Support more special output types
         if self.rtype == 'A':
             return inet_pton(AF_INET, self.rdata)
+        elif self.rtype == 'NS':
+            return utils.labels2str(
+                map(
+                    utils.byteify,
+                    self.rdata.split('.')
+                )
+            )
         elif self.rtype == 'AAAA':
             return inet_pton(AF_INET6, self.rdata)
         else:
             return utils.byteify(self.rdata)
 
-    def unpack_rdata(self, data):
+    def unpack_rdata(self, data, offset, length):
         '''
         Decode binary rdata.
         '''
+        subset = data[offset:offset+length]
+
         if self.rtype == 'A':
-            return inet_ntop(AF_INET, data)
+            return inet_ntop(AF_INET, subset)
+        elif self.rtype == 'NS':
+            return '.'.join(
+                map(
+                    utils.stringify,
+                    utils.str2labels(data, offset)[1]
+                )
+            )
         elif self.rtype == 'AAAA':
-            return inet_ntop(AF_INET6, data)
+            return inet_ntop(AF_INET6, subset)
         else:
-            return utils.stringify(data)
+            return utils.stringify(subset)
 
     def pack(self):
         '''
@@ -138,7 +154,5 @@ class Record(object):
 
         self.rtype, self.rclass, self.rttl, rdata_len = struct.unpack("!HHIH", source[offset:offset+10])
         offset += 10
-        self.rdata = self.unpack_rdata(
-            source[offset:offset+rdata_len]
-        )
+        self.rdata = self.unpack_rdata(source, offset, rdata_len)
         return offset + rdata_len

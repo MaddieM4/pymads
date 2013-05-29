@@ -51,24 +51,42 @@ class TestResolution(unittest.TestCase):
         self.chain = Chain([source])
         self.server.config['chains'] = [self.chain]
 
-    def do_test_record(self, record):
+    def do_test_record(self, *records, **kwargs):
         '''
         Test that a record is retrievable.
         '''
-        host_data = self.dig(record.domain_name)
-        success_text = '''
-;; ANSWER SECTION:
-%s.\t\t%d\t%s\t%s\t%s
-''' % (record.domain_name, record.rttl, record.rclass, record.rtype, record.rdata)
+        query_domain = records[0].domain_name
+        host_data = self.dig(query_domain, **kwargs)
 
-        self.assertIn(
-            success_text,
-            host_data
-        )
+        answer_string = '\n;; ANSWER SECTION:\n'
+        self.assertIn(answer_string, host_data)
 
-    def dig(self, domain_name):
+        start_index = host_data.index(answer_string)
+        end_index   = host_data.index('\n\n', start_index)
+        answer_section = host_data[start_index:end_index]
+        answers = answer_section.split('\n')[2:]
+
+        for record in records:
+            success_text = '%s.\t\t%d\t%s\t%s\t%s' % (
+                record.domain_name,
+                record.rttl,
+                record.rclass,
+                record.rtype,
+                record.rdata
+            )
+
+            self.assertIn(
+                success_text,
+                answers
+            )
+
+            answers.remove(success_text)
+
+        self.assertEquals(answers, [])
+
+    def dig(self, domain_name, extra=[]):
         return dig(domain_name, test_host, test_port,
-                     timeout=1, retry=0)
+                     timeout=1, retry=0, extra=extra)
 
     def test_A(self):
         '''
@@ -110,6 +128,30 @@ class TestResolution(unittest.TestCase):
         )
         self.thread_cons.start()
         self.do_test_record(record)
+
+    def test_recursive(self):
+        '''
+        Test responses where recursion is wanted and unwanted.
+        '''
+        from pymads.sources.dns import DnsSource
+        self.server.debug = True
+
+        hostname = 'example.com'
+        ip_addr  = '9.9.9.9'
+        record   = Record(hostname, ip_addr)
+        self.setup_chain(record)
+
+        record_official = Record(hostname, '192.0.43.10', rttl=172800)
+
+        # Use b.iana-servers.net for consistent TTL
+        source = DnsSource(remote=('b.iana-servers.net', 53))
+        self.chain.sources.append(source)
+
+        # Test where recursion is wanted
+        self.do_test_record(record, record_official)
+        # Test where recursion is unwanted
+        self.do_test_record(record, record_official,
+            extra=['+norecurse'])
 
     def test_error_SERVFAIL(self):
         '''
@@ -198,12 +240,12 @@ class TestResolutionIPv6(TestResolution):
         self.thread = threading.Thread(target=self.server.serve)
         self.thread.start()
 
-    def dig(self, domain_name):
+    def dig(self, domain_name, extra=[]):
         '''
         IPv6 version of dig function.
         '''
         return dig(domain_name, test_host_ipv6[0], test_port,
-                     timeout=1, retry=0)
+                     timeout=1, retry=0, extra=extra)
 
     def make_socket(self):
         '''

@@ -34,12 +34,18 @@ class DnsSource(object):
         self.appid = 0
         self.retries = retries
 
-        if '.' in local[0]:
+    def make_socket(self):
+        if '.' in self.local_addr[0]:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         else:
             self.socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
         self.socket.bind(self.local_addr)
         self.socket.settimeout(1)
+
+    def close_socket(self):
+        if hasattr(self, 'socket'):
+            self.socket.close()
+            self.socket = None
 
     def exchange(self, request):
         '''
@@ -49,13 +55,17 @@ class DnsSource(object):
         tries = 0
         resp_pkt = ''
 
-        while tries < 1 + self.retries:
-            self.socket.sendto(req_pkt, self.remote_addr)
-            try:
-                resp_pkt = self.socket.recv(512)
-                break
-            except socket.timeout:
-                tries += 1
+        self.make_socket()
+        try:
+            while tries < 1 + self.retries:
+                self.socket.sendto(req_pkt, self.remote_addr)
+                try:
+                    resp_pkt = self.socket.recv(512)
+                    break
+                except socket.timeout:
+                    tries += 1
+        finally:
+            self.close_socket()
 
         if resp_pkt == '':
             raise Exception('External resolution timed out')
