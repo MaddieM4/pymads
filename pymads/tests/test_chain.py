@@ -53,3 +53,28 @@ class TestChains(unittest.TestCase):
             ip_addr
         )
         self.assertEqual(chain.get('not'+hostname), set())
+
+    def test_cachefilter(self):
+        from pymads.sources.dict  import DictSource
+        from pymads.filters.cache import CacheFilter
+
+        hostname = 'example.com'
+        ip_addr  = '9.9.9.9'
+        record   = Record(hostname, ip_addr)
+
+        source = DictSource({hostname: [record]})
+        filter = CacheFilter()
+        chain  = Chain([source], [filter])
+
+        self.assertEqual(
+            chain.get(hostname),
+            set([record])
+        )
+
+        # Clear out the source and see if Pepperidge Cache remembers
+        source.data = {}
+
+        self.assertEqual(
+            chain.get(hostname),
+            set([record])
+        )
