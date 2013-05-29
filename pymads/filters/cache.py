@@ -15,21 +15,18 @@ You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
-class Chain(object):
-    ''' Represents a source for DNS results, including filters '''
-    def __init__(self, sources=[], filters=[]):
-        self.sources = sources
-        self.filters = filters
+class CacheFilter(object):
+    '''
+    Doesn't hit the next layer of filtering if we already retrieved the data.
+    '''
 
-    def get_from_sources(self, request):
-        ''' Returns a generator '''
-        for source in self.sources:
-            for record in source.get(request):
-                yield record
+    def __init__(self):
+        self.cache = {}
 
     def get(self, request):
-        source = self.get_from_sources
-        for filt in self.filters:
-            filt.source = source
-            source = filt.get
-        return set(source(request))
+        if request in self.cache:
+            return self.cache[request]
+        else:
+            result = list(self.source(request))
+            self.cache[request] = result
+            return result
