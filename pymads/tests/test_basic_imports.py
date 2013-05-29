@@ -41,4 +41,4 @@ class TestImports(unittest.TestCase):
         from pymads.sources.dict import DictSource
 
     def test_import_filters(self):
-        from pymads.filters import pymadsrr
+        from pymads.filters.cache import CacheFilter
