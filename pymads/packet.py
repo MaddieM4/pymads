@@ -191,7 +191,8 @@ class Packet(object):
         offset += 4
 
         records = []
-        for _ in range(self.ancount + self.nscount + self.arcount):
+        # Ignore ADDITIONAL section for now
+        for _ in range(self.ancount + self.nscount):# + self.arcount):
             # Read a record
             rec = Record('','0.0.0.0')
             offset = rec.unpack(packet, offset)

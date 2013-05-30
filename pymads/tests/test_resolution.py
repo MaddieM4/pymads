@@ -62,7 +62,7 @@ class TestResolution(unittest.TestCase):
         self.assertIn(answer_string, host_data)
 
         start_index = host_data.index(answer_string)
-        end_index   = host_data.index('\n\n', start_index)
+        end_index   = host_data.index('\n\n;;', start_index)
         answer_section = host_data[start_index:end_index]
         answers = answer_section.split('\n')[2:]
 
@@ -82,6 +82,8 @@ class TestResolution(unittest.TestCase):
 
             answers.remove(success_text)
 
+        if answers:
+            raise Exception(answer_section)
         self.assertEquals(answers, [])
 
     def dig(self, domain_name, extra=[]):
@@ -134,7 +136,6 @@ class TestResolution(unittest.TestCase):
         Test responses where recursion is wanted and unwanted.
         '''
         from pymads.sources.dns import DnsSource
-        self.server.debug = True
 
         hostname = 'example.com'
         ip_addr  = '9.9.9.9'
@@ -150,6 +151,7 @@ class TestResolution(unittest.TestCase):
         # Test where recursion is wanted
         self.do_test_record(record, record_official)
         # Test where recursion is unwanted
+        # TODO : use source flags
         self.do_test_record(record, record_official,
             extra=['+norecurse'])
 
