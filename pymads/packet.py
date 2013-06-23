@@ -28,6 +28,13 @@ HEADER_LENGTH = 12
 ParseGuard = ErrorConverter(['FORMERR'])
 
 def flag_property(position, size, doc):
+    '''
+    Handy trick we use to reduce duplicated flag code.
+
+    Instead of creating a property with decorators, we use the property
+    function, supplying it with lambdas that call self.getflag and
+    self.setflag with the appropriate arguments.
+    '''
     return property(
         fget = lambda self: self.getflag(position, size),
         fset = lambda self, value: self.setflag(position, size, value),
@@ -35,43 +42,73 @@ def flag_property(position, size, doc):
     )
 
 class Packet(object):
+    '''
+    Represents a DNS packet, is the superclass of Response and Request.
+
+    Handles all the responsibilities common across packet types, including
+    flag properties.
+    '''
     def __init__(self, 
             qid=0,
             flags=0,
-            question=[],
+            question=None,
             qtype=1,
             qclass=1,
-            records=[]
+            records=None
         ):
         self.qid      = qid
         self.flags    = flags
-        self.question = question
+        self.question = question or []
         self.qtype    = const.get_code(const.RECORD_TYPES, qtype)
         self.qclass   = const.get_code(const.RECORD_TYPES, qclass)
-        self.records  = records
+        self.records  = records or []
 
     @property
     def question(self):
+        '''
+        Domain name being queried, broken up into an array.
+
+        For example, google.com -> ['google', 'com']
+        '''
         return self._question
 
     @question.setter
     def question(self, value):
-        self._question = list(map(lambda x: x.lower(), value))
+        '''
+        Setter for self.question. Expects an iterable of strings.
+        '''
+        self._question = [x.lower() for x in value]
 
     @property
     def name(self):
+        '''
+        Domain name being queried, as a single string.
+
+        Example: 'google.com'
+        '''
         return ".".join(utils.stringify(x) for x in self.question)
 
     @name.setter
     def name(self, value):
+        '''
+        Setter for self.name. Expects a string.
+        '''
         self.question = [utils.byteify(x) for x in value.split('.')]
 
     @property
     def records(self):
+        '''
+        All records that are in this packet's payload.
+        '''
         return self._records
 
     @records.setter
     def records(self, value):
+        '''
+        Set the payload for the packet.
+
+        Also recomputes the self.*_records properties.
+        '''
         self._records = list(value)
         self.an_records = [r for r in self._records if r.rtype != 'NS']
         self.ns_records = [r for r in self._records if r.rtype == 'NS']
@@ -112,9 +149,22 @@ class Packet(object):
     )
 
     def getflag(self, position, size):
+        '''
+        Get a flag value from the flag data.
+
+        position: int describing bit offset.
+        size: mask, such as 0x1 for 1 bit, or 0xf for 4 bits
+        '''
         return (self.flags >> position) & size
 
     def setflag(self, position, size, value):
+        '''
+        Set a flag value in the flag data.
+
+        position: int describing bit offset.
+        size: mask, such as 0x1 for 1 bit, or 0xf for 4 bits
+        value: new value of the flag
+        '''
         value = int(value) & size
         mask  = 0xffff - (size << position)
         self.flags = (self.flags & mask) | (value << position)
@@ -122,7 +172,9 @@ class Packet(object):
     # Packing and unpacking -------------------------------
 
     def pack(self):
-        ''' Return packet string for request '''
+        '''
+        Returns serialized packet string.
+        '''
         resources = []
         resources.extend(self.an_records)
         num_an = len(self.an_records)
@@ -141,7 +193,9 @@ class Packet(object):
         return pkt
 
     def pack_header(self, ancount, nscount, arcount):
-        """Formats the header to be used in the response packet"""
+        """
+        Serializes the header.
+        """
 
         qdcount = 1
 
@@ -157,18 +211,22 @@ class Packet(object):
         return hdr
 
     def pack_question(self):
-        """Formats the question field to be used in the response packet"""
+        """
+        Serializes the question data.
+        """
 
-        q = utils.labels2str(self.question)
-        q += struct.pack(
+        packed = utils.labels2str(self.question)
+        packed += struct.pack(
             "!HH",
              self.qtype,
              self.qclass
         )
-        return q
+        return packed
 
     def unpack(self, packet):
-        ''' Parse a DNS packet and set object properties from it '''
+        '''
+        Parse a DNS packet and set object properties from it.
+        '''
 
         with ParseGuard:
             self.unpack_header(packet)
@@ -177,17 +235,28 @@ class Packet(object):
             raise DnsError('FORMERR', "Invalid class: " + qclass)
 
     def unpack_header(self, packet):
-        ''' Parse the header data of a DNS packet. '''
+        '''
+        Parse the header data of a DNS packet.
+        '''
 
         if len(packet) < HEADER_LENGTH:
             raise ValueError("Expected 12 byte header, got %r" % packet)
-        self.qid, self.flags, self.qdcount, self.ancount, self.nscount, self.arcount = struct.unpack('!HHHHHH', packet[:HEADER_LENGTH])
+        (
+            self.qid,
+            self.flags,
+            self.qdcount,
+            self.ancount,
+            self.nscount,
+            self.arcount
+        ) = struct.unpack('!HHHHHH', packet[:HEADER_LENGTH])
 
     def unpack_body(self, packet):
-        ''' Parse the body data of a DNS packet. '''
+        '''
+        Parse the body data of a DNS packet.
+        '''
 
         offset, self.question = utils.str2labels(packet, HEADER_LENGTH)
-        self.qtype, self.qclass= struct.unpack("!HH", packet[offset:offset+4])
+        self.qtype, self.qclass = struct.unpack("!HH", packet[offset:offset+4])
         offset += 4
 
         records = []
@@ -202,6 +271,13 @@ class Packet(object):
     # Misc ------------------------------------------------
 
     def __repr__(self):
+        '''
+        How repr(packet) behaves.
+
+        Generally you will never see this in the wild unless you're doing
+        weird stuff on purpose. It is rare that you will deal with a raw
+        Packet, instead of its Request and Response subclasses.
+        '''
         return "<packet qid=%d>" % (
             self.qid
         )

@@ -41,35 +41,59 @@ class Record(object):
 
     @property
     def rdata(self):
+        '''
+        Field that contains the "contents" of the record.
+        '''
         return self._rdata
 
     @rdata.setter
     def rdata(self, value):
+        '''
+        Setter for rdata that also sets up self.rdata_packed eagerly.
+        '''
         self._rdata = value
         self.rdata_packed = self.pack_rdata()
 
     @property
     def rtype(self):
+        '''
+        Record type. Usually A or AAAA.
+        '''
         return self._rtype
 
     @rtype.setter
     def rtype(self, value):
+        '''
+        Setter for record type. Accepts either textual or int code.
+        '''
         self._rtype = const.get_label(const.RECORD_TYPES, value)
 
     @property
     def rclass(self):
+        '''
+        Record class. Almost always IN.
+        '''
         return self._rclass
 
     @rclass.setter
     def rclass(self, value):
+        '''
+        Setter for record class. Accepts either textual or int code.
+        '''
         self._rclass = const.get_label(const.RECORD_CLASSES, value)
 
     @property
     def rtypecode(self):
+        '''
+        Numeric code for this record's type.
+        '''
         return const.RECORD_TYPES[self._rtype]
 
     @property
     def rclasscode(self):
+        '''
+        Numeric code for this record's class.
+        '''
         return const.RECORD_CLASSES[self._rclass]
 
     def __hash__(self):
@@ -134,16 +158,16 @@ class Record(object):
         Formats the resource fields to be used in the response packet.
         '''
 
-        r  = utils.labels2str(utils.byteify(x) for x in self.domain_name.split('.'))
-        r += struct.pack(
+        packed  = utils.labels2str(utils.byteify(x) for x in self.domain_name.split('.'))
+        packed += struct.pack(
             "!HHIH",
              self.rtypecode,
              self.rclasscode,
              self.rttl,
              len(self.rdata_packed)
         )
-        r += self.rdata_packed
-        return r
+        packed += self.rdata_packed
+        return packed
 
     def unpack(self, source, offset=0):
         '''

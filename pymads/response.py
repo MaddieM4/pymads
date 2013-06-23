@@ -22,7 +22,8 @@ from pymads.packet import Packet
 class Response(Packet):
     """ Represents a response packet """
 
-    def __init__(self, qid=0, question=[], qtype=1, qclass=1, code=0, records = []): 
+    def __init__(self, qid=0, question=[], qtype=1, qclass=1, code=0,
+                records = []): 
         Packet.__init__(self,
             qid=qid,
             question=question,
