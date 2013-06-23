@@ -158,7 +158,9 @@ class Record(object):
         Formats the resource fields to be used in the response packet.
         '''
 
-        packed  = utils.labels2str(utils.byteify(x) for x in self.domain_name.split('.'))
+        packed  = utils.labels2str(
+            utils.byteify(x) for x in self.domain_name.split('.')
+        )
         packed += struct.pack(
             "!HHIH",
              self.rtypecode,
@@ -176,7 +178,12 @@ class Record(object):
         offset, labels = utils.str2labels(source, offset)
         self.domain_name = '.'.join(utils.stringify(x) for x in labels)
 
-        self.rtype, self.rclass, self.rttl, rdata_len = struct.unpack("!HHIH", source[offset:offset+10])
+        (
+            self.rtype,
+            self.rclass,
+            self.rttl,
+            rdata_len
+        ) = struct.unpack("!HHIH", source[offset:offset+10])
         offset += 10
         self.rdata = self.unpack_rdata(source, offset, rdata_len)
         return offset + rdata_len

@@ -16,7 +16,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 import sys
 
-from pymads import request, response
+from pymads import request
 from pymads.errors import DnsError
 import traceback
 
@@ -30,22 +30,37 @@ class Consumer(object):
 
     @property
     def queue(self):
+        '''
+        Convenience access: server queue.
+        '''
         return self.server.queue
 
     @property
     def socket(self):
+        '''
+        Convenience access: server socket.
+        '''
         return self.server.socket
 
     @property
     def serving(self):
+        '''
+        Convenience access: is server running?
+        '''
         return self.server.serving
 
     @property
     def debug(self):
+        '''
+        Convenience access: is server in debug mode?
+        '''
         return self.server.debug
 
     @property
     def guard(self):
+        '''
+        Convenience access: server error guard.
+        '''
         return self.server.guard
 
     def listen(self):
@@ -70,11 +85,11 @@ class Consumer(object):
                 req.unpack(packet)
                 resp_pkt = self.make_response(req)
 
-        except DnsError as e:
+        except DnsError as exc:
             try:
-                resp = req.respond(e.code)
+                resp = req.respond(exc.code)
                 resp_pkt = resp.pack()
-            except:
+            except Exception: # Shit has completely hit the fan
                 self.queue.task_done()
                 traceback.print_exc()
                 raise
@@ -83,6 +98,9 @@ class Consumer(object):
         self.queue.task_done()
 
     def make_response(self, req):
+        '''
+        Process and respond to a request packet.
+        '''
         for chain in self.server.config['chains']:
             records = chain.get(req.name)
             if records:

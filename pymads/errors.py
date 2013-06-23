@@ -20,6 +20,10 @@ import traceback
 from pymads import const
 
 class DnsError(Exception):
+    '''
+    DNS-related error that can be turned into an error response by the
+    server when caught.
+    '''
     def __init__(self, errtype, *args):
         self.code  = const.get_code( const.ERROR_CODES, errtype)
         self.label = const.get_label(const.ERROR_CODES, errtype)
@@ -43,6 +47,9 @@ class ErrorConverter(object):
             self.tb_stream = tb_stream
 
     def quiet(self, value = True):
+        '''
+        Set whether the next error to occur should print a traceback.
+        '''
         self._quiet = value
         return self
 
@@ -55,9 +62,9 @@ class ErrorConverter(object):
             return
 
         if isinstance(exc_val, exc_type):
-            e = exc_val
+            exc = exc_val
         else:
-            e = exc_type(exc_val)
+            exc = exc_type(exc_val)
 
         if not isinstance(exc_val, DnsError):
             if self.tb_stream and not quiet:
@@ -67,5 +74,5 @@ class ErrorConverter(object):
                     exc_tb,
                     file=self.tb_stream
                 )
-            new_args = self.args + e.args
+            new_args = self.args + exc.args
             raise DnsError(*new_args)

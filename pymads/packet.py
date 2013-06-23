@@ -21,7 +21,7 @@ import struct
 from pymads import const
 from pymads import utils
 from pymads.record import Record
-from pymads.errors import *
+from pymads.errors import DnsError, ErrorConverter
 
 HEADER_LENGTH = 12
 
@@ -232,7 +232,7 @@ class Packet(object):
             self.unpack_header(packet)
             self.unpack_body(packet)
         if self.qclass != 1:
-            raise DnsError('FORMERR', "Invalid class: " + qclass)
+            raise DnsError('FORMERR', "Invalid class: " + self.qclass)
 
     def unpack_header(self, packet):
         '''

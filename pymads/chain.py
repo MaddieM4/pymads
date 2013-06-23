@@ -16,18 +16,25 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
 class Chain(object):
-    ''' Represents a source for DNS results, including filters '''
-    def __init__(self, sources=[], filters=[]):
-        self.sources = sources
-        self.filters = filters
+    '''
+    Represents a source for DNS results, including filters
+    '''
+    def __init__(self, sources=None, filters=None):
+        self.sources = sources or []
+        self.filters = filters or []
 
     def get_from_sources(self, request):
-        ''' Returns a generator '''
+        '''
+        Returns a generator.
+        '''
         for source in self.sources:
             for record in source.get(request):
                 yield record
 
     def get(self, request):
+        '''
+        Retrieve DNS record set based on request.
+        '''
         source = self.get_from_sources
         for filt in self.filters:
             filt.source = source
