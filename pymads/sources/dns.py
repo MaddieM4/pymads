@@ -85,3 +85,32 @@ class DnsSource(object):
             raise Exception("Query failed with code %d" % resp.flag_rcode)
         else:
             return set(resp.records)
+
+class MultiDNS(object):
+    '''
+    Not a source, but a utility class that simplifies requesting to
+    multiple different servers on demand.
+    '''
+
+    def __init__(self):
+        self.cache = {}
+
+    def add(self, dnssource):
+        '''
+        Add a DnsSource object to collection.
+        '''
+        self.cache[dnssource.remote_addr] = dnssource
+
+    def make(self, remote_addr):
+        '''
+        Create and return a DnsSource object. Does not register it.
+        '''
+        return DnsSource(remote=remote_addr)
+
+    def get_source(self, remote_addr):
+        '''
+        Return a source for the remote address, creating if necessary.
+        '''
+        if not (remote_addr in self.cache):
+            self.add(self.make(remote_addr))
+        return self.cache[remote_addr]
