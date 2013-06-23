@@ -48,7 +48,14 @@ class TestRecursion(unittest.TestCase):
         )
 
         # What about other servers?
+        addr2 = ('8.8.4.4', 53)
         self.looks_about_right(
             'google.com',
-            mdns.get('google.com', ('8.8.4.4', 53))
+            mdns.get('google.com', addr2)
+        )
+
+        # And we aren't throwing things away after we make them
+        self.assertEqual(
+            mdns.get_source(addr2),
+            mdns.get_source(addr2)
         )
