@@ -18,15 +18,37 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 from __future__ import unicode_literals
 
 from pymads.extern import unittest
-from pymads.sources.dns import DnsSource
+from pymads.sources.dns import DnsSource, MultiDNS
 
 class TestRecursion(unittest.TestCase):
     def setUp(self):
         self.source = DnsSource() # Uses 8.8.8.8 by default
 
-    def test_recursion(self):
-        google = self.source.get('google.com')
+    def looks_about_right(self, domain, results):
+        self.assertTrue(len(results) > 0)
+        for record in results:
+            self.assertEqual(record.domain_name, domain)
 
-        self.assertTrue(len(google) > 0)
-        for record in google:
-            self.assertEqual(record.domain_name, 'google.com')
+    def test_recursion(self):
+        self.looks_about_right(
+            'google.com',
+            self.source.get('google.com')
+        )
+
+    def test_multidns(self):
+        addr = self.source.remote_addr
+        mdns = MultiDNS()
+
+        mdns.add(self.source)
+        self.assertEqual(self.source, mdns.get_source(addr))
+
+        self.looks_about_right(
+            'google.com',
+            mdns.get('google.com', addr)
+        )
+
+        # What about other servers?
+        self.looks_about_right(
+            'google.com',
+            mdns.get('google.com', ('8.8.4.4', 53))
+        )

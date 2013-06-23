@@ -114,3 +114,9 @@ class MultiDNS(object):
         if not (remote_addr in self.cache):
             self.add(self.make(remote_addr))
         return self.cache[remote_addr]
+
+    def get(self, domain_name, server_addr):
+        '''
+        Retrieve domain name info from a given server.
+        '''
+        return self.get_source(server_addr).get(domain_name)
