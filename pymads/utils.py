@@ -19,25 +19,48 @@ import struct
 from pymads.errors import DnsError
 
 try:
-    bytes
-except:
-    bytes = str
+    BYTES = bytes
+except NameError:
+    BYTES = str
 
 def label2str(label):
-    s = struct.pack("!B", len(label))
-    s += label
-    return s
+    '''
+    Convert a single label component into the length + content form.
+
+    'google' -> '{6}google'
+    '''
+    packed = struct.pack("!B", len(label))
+    packed += label
+    return packed
     
 def labels2str(labels):
-    s = bytes()
+    '''
+    Turn a label array into a terminated serialized string.
+
+    ['google', 'com'] -> '{6}google{3}com{0}'
+    '''
+    packed = BYTES()
     for label in labels:
-        s += label2str(label)
-    s += struct.pack("!B", 0)
-    return s
+        packed += label2str(label)
+    packed += struct.pack("!B", 0)
+    return packed
 
 def str2labels(source, offset=0):
     '''
-    Returns (length, ['label','list'])
+    Deserializes a string into a label array, based on a buffer.
+
+    The awkward API is because DNS supports compression-by-reference, where
+    you say "fetch this data from another part of the packet." This lets
+    packet creators shave off redundant bytes, usually by setting record
+    labels to point to the question data.
+
+    For pymads to be able to handle this feature when interacting with
+    other computers, the str2labels function has to be provided the whole
+    packet, and the offset for the label string you want deserialized. It
+    also gives you the number of bytes consumed, to help you keep parsing
+    the packet.
+
+    packet, 18 -> (12, ['google','com'])
     '''
     labels = []
     while True:
@@ -57,12 +80,22 @@ def str2labels(source, offset=0):
     return offset, labels
 
 def byteify(obj):
+    '''
+    Normalize a string-ish object to bytes.
+
+    This will get thrown away when we integrate Persei.
+    '''
     try:
-        return bytes(obj, 'utf-8')
-    except:
+        return BYTES(obj, 'utf-8')
+    except TypeError:
         return str(obj)
 
 def stringify(obj):
+    '''
+    Normalize a string-ish object to str.
+
+    This will get thrown away when we integrate Persei.
+    '''
     if hasattr(obj, 'decode'):
         return obj.decode()
     else:

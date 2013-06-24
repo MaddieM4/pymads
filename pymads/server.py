@@ -26,7 +26,7 @@ from pymads.consumer import Consumer
 from pymads.errors import ErrorConverter
 from pymads.extern import queue
 
-default_config = {
+DEFAULT_CONFIG = {
     'listen_host' : '0.0.0.0',
     'listen_port' : 53,
     'debug'  : False,
@@ -44,9 +44,9 @@ class DnsServer(object):
         '''
         Use keyword arguments to override the defaults.
 
-        See pymads.server.default_config for more info.
+        See pymads.server.DEFAULT_CONFIG for more info.
         '''
-        self.config  = dict(default_config) # Clone
+        self.config  = dict(DEFAULT_CONFIG) # Clone
         self.config.update(kwargs) # Customize
         self.serving = True
         self.socket  = None
@@ -124,10 +124,7 @@ class DnsServer(object):
 
         self.bind()
         udps = self.socket
-        ns_resource_records = ar_resource_records = []
         while self.serving:
-            req = None
-
             try:
                 # max UDP DNS pkt size = 512
                 req_pkt, src_addr = udps.recvfrom(512)

@@ -18,6 +18,7 @@ import sys
 
 from pymads import request
 from pymads.errors import DnsError
+from pymads.extern import queue as queue_module
 import traceback
 
 class Consumer(object):
@@ -76,7 +77,7 @@ class Consumer(object):
         '''
         try:
             packet, source = self.queue.get(timeout = self.timeout)
-        except:
+        except (queue_module.Empty, TypeError):
             return
 
         try:

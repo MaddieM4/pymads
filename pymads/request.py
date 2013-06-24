@@ -19,9 +19,13 @@ from __future__ import absolute_import
 
 from pymads.packet import Packet
 from pymads.response import Response
+from pymads.errors import DnsError
 
 class Request(Packet):
-    def __init__(self, qid=0, question=[], qtype=1, qclass=1):
+    '''
+    Represents a DNS request packet.
+    '''
+    def __init__(self, qid=0, question=None, qtype=1, qclass=1):
         Packet.__init__(self,
             qid=qid,
             question=question,
@@ -29,7 +33,10 @@ class Request(Packet):
             qclass=qclass,
         )
 
-    def respond(self, code=0, records=[]):
+    def respond(self, code=0, records=None):
+        '''
+        Create a response packet based on this request.
+        '''
         return Response(
             self.qid,
             self.question,
@@ -47,6 +54,9 @@ class Request(Packet):
         )
 
     def unpack(self, packet):
+        '''
+        Regular packet serialization, but with some extra validation.
+        '''
         Packet.unpack(self, packet)
         if self.flag_qr != 0 or self.flag_opcode != 0 or self.qdcount == 0:
             raise DnsError('FORMERR', "Invalid query")

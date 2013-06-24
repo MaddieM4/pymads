@@ -16,6 +16,14 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
 def get_label(table, value):
+    '''
+    Get the label for a constant in a constant table.
+
+    This acts as a normalizer - providing a label will just return that
+    label back to you, as long as it exists in the table.
+
+    Providing an int will get you the label for that code.
+    '''
     if isinstance(value, int):
         return lookup_str(table, value)
     else:
@@ -26,6 +34,14 @@ def get_label(table, value):
             raise ValueError("%r not in const table", value)
 
 def get_code(table, value):
+    '''
+    Get the integer code for a constant in a constant table.
+
+    This acts as a normalizer - providing a code will just return that
+    code back to you, as long as it exists in the table.
+
+    Providing a label will get you the code for that label.
+    '''
     if isinstance(value, int):
         return value
     else:
@@ -33,6 +49,11 @@ def get_code(table, value):
         return table[value]
 
 def lookup_str(table, code):
+    '''
+    Search through a table for the label associated with the given code.
+
+    Not a normalizer, expects an int.
+    '''
     for (key, value) in table.items():
         if value == code:
             return key

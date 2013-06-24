@@ -61,6 +61,10 @@ class Packet(object):
         self.question = question or []
         self.qtype    = const.get_code(const.RECORD_TYPES, qtype)
         self.qclass   = const.get_code(const.RECORD_TYPES, qclass)
+        self.qdcount  = 1
+        self.ancount  = 0
+        self.nscount  = 0
+        self.arcount  = 0
         self.records  = records or []
 
     @property
@@ -113,6 +117,9 @@ class Packet(object):
         self.an_records = [r for r in self._records if r.rtype != 'NS']
         self.ns_records = [r for r in self._records if r.rtype == 'NS']
         self.ar_records = []
+        self.ancount = len(self.an_records)
+        self.nscount = len(self.ns_records)
+        self.arcount = len(self.ar_records)
 
     # Flags data ------------------------------------------
 
