@@ -16,35 +16,33 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
 import struct
+from persei import RawData, RawDataDecorator
 from pymads.errors import DnsError
 
-try:
-    BYTES = bytes
-except NameError:
-    BYTES = str
-
+@RawDataDecorator()
 def label2str(label):
     '''
     Convert a single label component into the length + content form.
 
     'google' -> '{6}google'
     '''
-    packed = struct.pack("!B", len(label))
+    packed = RawData(struct.pack("!B", len(label)))
     packed += label
     return packed
-    
+
 def labels2str(labels):
     '''
     Turn a label array into a terminated serialized string.
 
     ['google', 'com'] -> '{6}google{3}com{0}'
     '''
-    packed = BYTES()
+    packed = RawData()
     for label in labels:
-        packed += label2str(label)
-    packed += struct.pack("!B", 0)
+        packed += RawData(label2str(label))
+    packed += RawData(struct.pack("!B", 0))
     return packed
 
+@RawDataDecorator()
 def str2labels(source, offset=0):
     '''
     Deserializes a string into a label array, based on a buffer.
@@ -78,25 +76,3 @@ def str2labels(source, offset=0):
         offset += length
         labels.append(label)
     return offset, labels
-
-def byteify(obj):
-    '''
-    Normalize a string-ish object to bytes.
-
-    This will get thrown away when we integrate Persei.
-    '''
-    try:
-        return BYTES(obj, 'utf-8')
-    except TypeError:
-        return str(obj)
-
-def stringify(obj):
-    '''
-    Normalize a string-ish object to str.
-
-    This will get thrown away when we integrate Persei.
-    '''
-    if hasattr(obj, 'decode'):
-        return obj.decode()
-    else:
-        return str(obj)

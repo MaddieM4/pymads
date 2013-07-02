@@ -18,6 +18,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 from __future__ import absolute_import
 
 import struct
+from persei import String, RawData
 from pymads import const
 from pymads import utils
 from pymads.record import Record
@@ -90,14 +91,14 @@ class Packet(object):
 
         Example: 'google.com'
         '''
-        return ".".join(utils.stringify(x) for x in self.question)
+        return ".".join(String(x) for x in self.question)
 
     @name.setter
     def name(self, value):
         '''
         Setter for self.name. Expects a string.
         '''
-        self.question = [utils.byteify(x) for x in value.split('.')]
+        self.question = [RawData(x) for x in value.split('.')]
 
     @property
     def records(self):

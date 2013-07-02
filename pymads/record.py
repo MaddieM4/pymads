@@ -17,6 +17,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 
 import struct
 from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
+from persei import String, RawData
 from pymads import const
 from pymads import utils
 
@@ -123,12 +124,12 @@ class Record(object):
             return inet_pton(AF_INET, self.rdata)
         elif self.rtype == 'NS':
             return utils.labels2str(
-                utils.byteify(x) for x in self.rdata.split('.')
+                RawData(x) for x in self.rdata.split('.')
             )
         elif self.rtype == 'AAAA':
             return inet_pton(AF_INET6, self.rdata)
         else:
-            return utils.byteify(self.rdata)
+            return RawData(self.rdata)
 
     def unpack_rdata(self, data, offset, length):
         '''
@@ -140,12 +141,12 @@ class Record(object):
             return inet_ntop(AF_INET, subset)
         elif self.rtype == 'NS':
             return '.'.join(
-                utils.stringify(x) for x in utils.str2labels(data, offset)[1]
+                String(x) for x in utils.str2labels(data, offset)[1]
             )
         elif self.rtype == 'AAAA':
             return inet_ntop(AF_INET6, subset)
         else:
-            return utils.stringify(subset)
+            return String(subset)
 
     def pack(self):
         '''
@@ -153,7 +154,7 @@ class Record(object):
         '''
 
         packed  = utils.labels2str(
-            utils.byteify(x) for x in self.domain_name.split('.')
+            RawData(x) for x in self.domain_name.split('.')
         )
         packed += struct.pack(
             "!HHIH",
@@ -170,7 +171,7 @@ class Record(object):
         Decodes data into instance properties
         '''
         offset, labels = utils.str2labels(source, offset)
-        self.domain_name = '.'.join(utils.stringify(x) for x in labels)
+        self.domain_name = '.'.join(String(x).export() for x in labels)
 
         (
             self.rtype,
