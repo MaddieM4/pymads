@@ -82,7 +82,10 @@ class Packet(object):
         '''
         Setter for self.question. Expects an iterable of strings.
         '''
-        self._question = [x.lower() for x in value]
+        self._question = [
+            String(String(x).export().lower())
+            for x in value
+        ]
 
     @property
     def name(self):
@@ -91,14 +94,14 @@ class Packet(object):
 
         Example: 'google.com'
         '''
-        return ".".join(String(x) for x in self.question)
+        return ".".join(x.export() for x in self.question)
 
     @name.setter
     def name(self, value):
         '''
         Setter for self.name. Expects a string.
         '''
-        self.question = [RawData(x) for x in value.split('.')]
+        self.question = value.split('.')
 
     @property
     def records(self):
@@ -216,7 +219,7 @@ class Packet(object):
             nscount,
             arcount
         )
-        return hdr
+        return RawData(hdr)
 
     def pack_question(self):
         """
@@ -236,6 +239,7 @@ class Packet(object):
         Parse a DNS packet and set object properties from it.
         '''
 
+        packet = RawData(packet)
         with PARSE_GUARD:
             self.unpack_header(packet)
             self.unpack_body(packet)
@@ -256,7 +260,7 @@ class Packet(object):
             self.ancount,
             self.nscount,
             self.arcount
-        ) = struct.unpack('!HHHHHH', packet[:HEADER_LENGTH])
+        ) = struct.unpack('!HHHHHH', packet[:HEADER_LENGTH].export())
 
     def unpack_body(self, packet):
         '''
@@ -264,7 +268,10 @@ class Packet(object):
         '''
 
         offset, self.question = utils.str2labels(packet, HEADER_LENGTH)
-        self.qtype, self.qclass = struct.unpack("!HH", packet[offset:offset+4])
+        self.qtype, self.qclass = struct.unpack(
+            "!HH",
+            packet[offset:offset+4].export()
+        )
         offset += 4
 
         records = []

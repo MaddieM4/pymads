@@ -123,9 +123,7 @@ class Record(object):
         if self.rtype == 'A':
             return inet_pton(AF_INET, self.rdata)
         elif self.rtype == 'NS':
-            return utils.labels2str(
-                RawData(x) for x in self.rdata.split('.')
-            )
+            return utils.labels2str(self.rdata.split('.'))
         elif self.rtype == 'AAAA':
             return inet_pton(AF_INET6, self.rdata)
         else:
@@ -138,13 +136,14 @@ class Record(object):
         subset = data[offset:offset+length]
 
         if self.rtype == 'A':
-            return inet_ntop(AF_INET, subset)
+            return inet_ntop(AF_INET, subset.export())
         elif self.rtype == 'NS':
             return '.'.join(
-                String(x) for x in utils.str2labels(data, offset)[1]
+                String(x).export()
+                for x in utils.str2labels(data, offset)[1]
             )
         elif self.rtype == 'AAAA':
-            return inet_ntop(AF_INET6, subset)
+            return inet_ntop(AF_INET6, subset.export())
         else:
             return String(subset)
 
@@ -163,8 +162,7 @@ class Record(object):
              self.rttl,
              len(self.rdata_packed)
         )
-        packed += self.rdata_packed
-        return packed
+        return RawData(packed) + self.rdata_packed
 
     def unpack(self, source, offset=0):
         '''
@@ -178,7 +176,7 @@ class Record(object):
             self.rclass,
             self.rttl,
             rdata_len
-        ) = struct.unpack("!HHIH", source[offset:offset+10])
+        ) = struct.unpack("!HHIH", source[offset:offset+10].export())
         offset += 10
         self.rdata = self.unpack_rdata(source, offset, rdata_len)
         return offset + rdata_len

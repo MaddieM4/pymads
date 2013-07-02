@@ -91,12 +91,14 @@ class Consumer(object):
                 resp = req.respond(exc.code)
                 resp_pkt = resp.pack()
             except Exception: # Shit has completely hit the fan
-                self.queue.task_done()
                 traceback.print_exc()
+                self.queue.task_done()
                 raise
 
-        self.socket.sendto(resp_pkt, source)
-        self.queue.task_done()
+        try:
+            self.socket.sendto(resp_pkt.export(), source)
+        finally:
+            self.queue.task_done()
 
     def make_response(self, req):
         '''

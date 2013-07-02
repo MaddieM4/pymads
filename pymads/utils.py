@@ -27,7 +27,7 @@ def label2str(label):
     'google' -> '{6}google'
     '''
     packed = RawData(struct.pack("!B", len(label)))
-    packed += label
+    packed += RawData(label)
     return packed
 
 def labels2str(labels):
@@ -42,7 +42,6 @@ def labels2str(labels):
     packed += RawData(struct.pack("!B", 0))
     return packed
 
-@RawDataDecorator()
 def str2labels(source, offset=0):
     '''
     Deserializes a string into a label array, based on a buffer.
@@ -61,10 +60,11 @@ def str2labels(source, offset=0):
     packet, 18 -> (12, ['google','com'])
     '''
     labels = []
+    source = RawData(source)
     while True:
-        length, = struct.unpack('!B', source[offset:offset+1])
+        length, = struct.unpack('!B', source[offset:offset+1].export())
         if length & 0xc0:
-            pointer, = struct.unpack('!H', source[offset:offset+2])
+            pointer, = struct.unpack('!H', source[offset:offset+2].export())
             pointer = pointer & (0xff-0xc0)
             if pointer > len(source):
                 raise DnsError('FORMERR', 'Bad pointer')

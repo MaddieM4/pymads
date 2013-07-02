@@ -58,7 +58,7 @@ class DnsSource(object):
         self.make_socket()
         try:
             while tries < 1 + self.retries:
-                self.socket.sendto(req_pkt, self.remote_addr)
+                self.socket.sendto(req_pkt.export(), self.remote_addr)
                 try:
                     resp_pkt = self.socket.recv(512)
                     break

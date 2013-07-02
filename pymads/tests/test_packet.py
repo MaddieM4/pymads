@@ -17,6 +17,8 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 
 from __future__ import unicode_literals
 
+from persei import RawData
+
 from pymads.extern import unittest
 from pymads.packet import Packet
 
@@ -88,11 +90,10 @@ class TestPacket(unittest.TestCase):
         resp_pkt  = resp.pack()
         record_start = question_len + 12 # HEADER_LENGTH
         pointer   = b'\xc0\x0c'
-        resp_pkt  = bytes().join([
-            resp_pkt[:record_start],
-            pointer,
-            resp_pkt[record_start+label_len:],
-        ])
+        resp_pkt  = \
+            resp_pkt[:record_start] + \
+            RawData(pointer) + \
+            resp_pkt[record_start+label_len:]
 
         # Test that it is interpreted the same as the original response
         p_clone = Packet()
