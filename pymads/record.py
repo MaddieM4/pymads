@@ -123,10 +123,7 @@ class Record(object):
             return inet_pton(AF_INET, self.rdata)
         elif self.rtype == 'NS':
             return utils.labels2str(
-                map(
-                    utils.byteify,
-                    self.rdata.split('.')
-                )
+                utils.byteify(x) for x in self.rdata.split('.')
             )
         elif self.rtype == 'AAAA':
             return inet_pton(AF_INET6, self.rdata)
@@ -143,10 +140,7 @@ class Record(object):
             return inet_ntop(AF_INET, subset)
         elif self.rtype == 'NS':
             return '.'.join(
-                map(
-                    utils.stringify,
-                    utils.str2labels(data, offset)[1]
-                )
+                utils.stringify(x) for x in utils.str2labels(data, offset)[1]
             )
         elif self.rtype == 'AAAA':
             return inet_ntop(AF_INET6, subset)

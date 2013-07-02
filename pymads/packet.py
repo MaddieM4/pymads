@@ -25,7 +25,7 @@ from pymads.errors import DnsError, ErrorConverter
 
 HEADER_LENGTH = 12
 
-ParseGuard = ErrorConverter(['FORMERR'])
+PARSE_GUARD = ErrorConverter(['FORMERR'])
 
 def flag_property(position, size, doc):
     '''
@@ -235,7 +235,7 @@ class Packet(object):
         Parse a DNS packet and set object properties from it.
         '''
 
-        with ParseGuard:
+        with PARSE_GUARD:
             self.unpack_header(packet)
             self.unpack_body(packet)
         if self.qclass != 1:

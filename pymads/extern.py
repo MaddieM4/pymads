@@ -15,6 +15,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
+# pylint: disable=F0401, W0611
+# Your version-specific import errors are meaningless, Pylint!
+
 import sys
 if (2, 7) <= sys.version_info[:2] < (3, 0) or sys.version_info >= (3, 2):
     import unittest
