@@ -14,6 +14,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
+from __future__ import print_function
 import sys
 
 from pymads import request
@@ -108,12 +109,10 @@ class Consumer(object):
             records = chain.get(req.name)
             if records:
                 if self.debug:
-                    sys.stdout.write('Found %r' % req)
-                    sys.stdout.flush()
+                    print('Found %r' % req)
                 resp = req.respond(0, records)
                 return resp.pack()
         # No records found
         if self.debug:
-            sys.stderr.write('Unknown %r' % req)
-            sys.stderr.flush()
+            print('Unknown %r' % req, file=sys.stderr)
         raise DnsError('NXDOMAIN', "query is not for our domain: %r" % req)
