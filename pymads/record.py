@@ -17,7 +17,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 
 import struct
 from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
-from persei import String, RawData
+from persei import String, RawData, RawDataDecorator
 from pymads import const
 from pymads import utils
 
@@ -115,9 +115,12 @@ class Record(object):
             self.rdata,
         )
 
+    @RawDataDecorator()
     def pack_rdata(self):
         '''
         Create the binary representation of the rdata for use in responses.
+
+        Returns as RawData.
         '''
         # TODO : Support more special output types
         if self.rtype == 'A':
@@ -127,13 +130,16 @@ class Record(object):
         elif self.rtype == 'AAAA':
             return inet_pton(AF_INET6, self.rdata)
         else:
-            return RawData(self.rdata)
+            return self.rdata
 
+    @RawDataDecorator(args=False)
     def unpack_rdata(self, data, offset, length):
         '''
         Decode binary rdata.
+
+        Returns as RawData.
         '''
-        subset = data[offset:offset+length]
+        subset = RawData(data[offset:offset+length])
 
         if self.rtype == 'A':
             return inet_ntop(AF_INET, subset.export())
@@ -145,7 +151,7 @@ class Record(object):
         elif self.rtype == 'AAAA':
             return inet_ntop(AF_INET6, subset.export())
         else:
-            return String(subset)
+            return subset
 
     def pack(self):
         '''
