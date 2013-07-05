@@ -110,6 +110,8 @@ class Consumer(object):
             if records:
                 if self.debug:
                     print('Found %r' % req)
+                    for rec in records:
+                        print(" * %r" % rec)
                 resp = req.respond(0, records)
                 return resp.pack()
         # No records found
