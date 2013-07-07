@@ -84,7 +84,7 @@ class DnsSource(object):
         if resp.flag_rcode != 0:
             raise Exception("Query failed with code %d" % resp.flag_rcode)
         else:
-            return set(resp.records)
+            return list(resp.records)
 
 class MultiDNS(object):
     '''

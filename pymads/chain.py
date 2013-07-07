@@ -39,4 +39,4 @@ class Chain(object):
         for filt in self.filters:
             filt.source = source
             source = filt.get
-        return set(source(request))
+        return list(source(request))

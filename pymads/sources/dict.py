@@ -34,7 +34,4 @@ class DictSource(object):
         self.data = dict(data)
 
     def get(self, domain):
-        result = set()
-        if domain in self.data:
-            result.update(set(self.data[domain]))
-        return result
+        return self.data.get(domain, [])

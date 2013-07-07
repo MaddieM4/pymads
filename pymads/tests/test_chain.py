@@ -33,9 +33,9 @@ class TestChains(unittest.TestCase):
         chain  = Chain([source])
         self.assertEqual(
             chain.get(hostname),
-            set([record])
+            [record]
         )
-        self.assertEqual(chain.get('not'+hostname), set())
+        self.assertEqual(chain.get('not'+hostname), [])
 
     def test_jsonsource(self):
         from pymads.sources.json import JSONSource
@@ -52,7 +52,7 @@ class TestChains(unittest.TestCase):
             results.pop().rdata,
             ip_addr
         )
-        self.assertEqual(chain.get('not'+hostname), set())
+        self.assertEqual(chain.get('not'+hostname), [])
 
     def test_cachefilter(self):
         from pymads.sources.dict  import DictSource
@@ -68,7 +68,7 @@ class TestChains(unittest.TestCase):
 
         self.assertEqual(
             chain.get(hostname),
-            set([record])
+            [record]
         )
 
         # Clear out the source and see if Pepperidge Cache remembers
@@ -76,5 +76,5 @@ class TestChains(unittest.TestCase):
 
         self.assertEqual(
             chain.get(hostname),
-            set([record])
+            [record]
         )
