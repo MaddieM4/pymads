@@ -18,6 +18,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 from __future__ import print_function
 
 import socket
+from persei import RawData
 from pymads.request import Request
 from pymads.response import Response
 
@@ -49,30 +50,33 @@ class DnsSource(object):
 
     def exchange(self, request):
         '''
-        Return a Response object from remote.
+        Takes a Request object, returns a Response object from remote.
         '''
         req_pkt = request.pack()
-        tries = 0
-        resp_pkt = ''
 
+        resp_pkt = self._exchange_data(req_pkt)
+
+        resp = Response()
+        resp.unpack(resp_pkt)
+        return resp
+
+    def _exchange_data(self, req_pkt):
+        '''
+        Takes a RawData request, returns RawData response from server.
+        '''
+        tries = 0
         self.make_socket()
         try:
             while tries < 1 + self.retries:
                 self.socket.sendto(req_pkt.export(), self.remote_addr)
                 try:
-                    resp_pkt = self.socket.recv(512)
-                    break
+                    return RawData(self.socket.recv(512))
                 except socket.timeout:
                     tries += 1
         finally:
             self.close_socket()
 
-        if resp_pkt == '':
-            raise Exception('External resolution timed out')
-
-        resp = Response()
-        resp.unpack(resp_pkt)
-        return resp
+        raise Exception('External resolution timed out')
 
     def get(self, domain):
         self.appid += 1
