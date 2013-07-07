@@ -79,16 +79,24 @@ class DnsSource(object):
         raise Exception('External resolution timed out')
 
     def get(self, domain):
-        self.appid += 1
-        req = Request(self.appid)
-        req.name = domain
-        req.flag_rd = True # Use recursion where available
+        req = self._make_request(domain)
 
         resp = self.exchange(req)
         if resp.flag_rcode != 0:
             raise Exception("Query failed with code %d" % resp.flag_rcode)
         else:
             return list(resp.records)
+
+    def _make_request(self, domain):
+        '''
+        Create a Request object for exchange based on a given domain.
+        '''
+        self.appid += 1
+        req = Request(self.appid)
+        req.name = domain
+        req.flag_rd = True # Use recursion where available
+
+        return req
 
 class MultiDNS(object):
     '''
