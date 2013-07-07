@@ -98,6 +98,20 @@ class DnsSource(object):
 
         return req
 
+class DummyDnsSource(DnsSource):
+    '''
+    Always use a given 'response' packet, instead of live query.
+    '''
+    def __init__(self, packet):
+        DnsSource.__init__(self)
+        self.packet = packet
+
+    def _exchange_data(self, req_pkt):
+        '''
+        Return the predetermined packet.
+        '''
+        return self.packet
+
 class MultiDNS(object):
     '''
     Not a source, but a utility class that simplifies requesting to
