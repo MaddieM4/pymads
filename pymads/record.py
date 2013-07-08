@@ -115,6 +115,17 @@ class Record(object):
             self.rdata,
         )
 
+    @property
+    def packtype(self):
+        if self.rtype in ('A',):
+            return 'IPv4'
+        elif self.rtype in ('AAAA',):
+            return 'IPv6'
+        elif self.rtype in ('NS', 'CNAME'):
+            return 'domain'
+        else:
+            return 'unknown'
+
     @RawDataDecorator()
     def pack_rdata(self):
         '''
@@ -122,15 +133,29 @@ class Record(object):
 
         Returns as RawData.
         '''
-        # TODO : Support more special output types
-        if self.rtype == 'A':
-            return inet_pton(AF_INET, self.rdata)
-        elif self.rtype == 'NS':
-            return utils.labels2str(self.rdata.split('.'))
-        elif self.rtype == 'AAAA':
-            return inet_pton(AF_INET6, self.rdata)
+        funcname = 'pack_rdata_' + self.packtype
+        if hasattr(self, funcname):
+            return getattr(self, funcname)()
         else:
             return self.rdata
+
+    def pack_rdata_IPv4(self):
+        '''
+        Pack an IPv4 record.
+        '''
+        return inet_pton(AF_INET, self.rdata)
+
+    def pack_rdata_IPv6(self):
+        '''
+        Pack an IPv6 record.
+        '''
+        return inet_pton(AF_INET6, self.rdata)
+
+    def pack_rdata_domain(self):
+        '''
+        Pack a record that holds an encoded domain name.
+        '''
+        return utils.labels2str(self.rdata.split('.'))
 
     @RawDataDecorator(args=False)
     def unpack_rdata(self, data, offset, length):
@@ -141,17 +166,36 @@ class Record(object):
         '''
         subset = RawData(data[offset:offset+length])
 
-        if self.rtype == 'A':
-            return inet_ntop(AF_INET, subset.export())
-        elif self.rtype == 'NS':
-            return '.'.join(
-                String(x).export()
-                for x in utils.str2labels(data, offset)[1]
-            )
-        elif self.rtype == 'AAAA':
-            return inet_ntop(AF_INET6, subset.export())
+        funcname_subset = 'unpack_rdata_subset_' + self.packtype
+        funcname_offset = 'unpack_rdata_offset_' + self.packtype
+
+        if hasattr(self, funcname_subset):
+            return getattr(self, funcname_subset)(subset)
+        elif hasattr(self, funcname_offset):
+            return getattr(self, funcname_offset)(data, offset, length)
         else:
             return subset
+
+    def unpack_rdata_subset_IPv4(self, subset):
+        '''
+        Unpack an IPv4 record.
+        '''
+        return inet_ntop(AF_INET, subset.export())
+
+    def unpack_rdata_subset_IPv6(self, subset):
+        '''
+        Unpack an IPv6 record.
+        '''
+        return inet_ntop(AF_INET6, subset.export())
+
+    def unpack_rdata_offset_domain(self, data, offset, length):
+        '''
+        Unpack a record that holds an encoded domain name.
+        '''
+        return '.'.join(
+            String(x).export()
+            for x in utils.str2labels(data, offset)[1]
+        )
 
     def pack(self):
         '''
