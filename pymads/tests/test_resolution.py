@@ -16,6 +16,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
 from __future__ import unicode_literals
+import re
 import threading
 
 from persei import RawData
@@ -66,16 +67,22 @@ class TestResolution(unittest.TestCase):
         start_index = host_data.index(answer_string)
         end_index   = host_data.index('\n\n;;', start_index)
         answer_section = host_data[start_index:end_index]
-        answers = answer_section.split('\n')[2:]
+        answers = [
+            re.sub('\s+', '\t', s)
+            for s in answer_section.split('\n')[2:]
+        ]
 
         for record in records:
-            success_text = '%s.\t\t%d\t%s\t%s\t%s' % (
+            success_text = '%s.\t%d\t%s\t%s\t%s' % (
                 record.domain_name,
                 record.rttl,
                 record.rclass,
                 record.rtype,
                 record.rdata
             )
+
+            if record.packtype == 'domain':
+                success_text += '.'
 
             self.assertIn(
                 success_text,
@@ -131,21 +138,19 @@ class TestResolution(unittest.TestCase):
         ipstr = '205.251.242.131'
         fstr  = uwstr + '.' + awstr
 
+        expected_records = [
+            Record(uwstr,fstr, 'CNAME',3600),
+            Record(fstr, awstr,'CNAME',60),
+            Record(awstr,ipstr,'A'    ,60),
+        ]
+
         records = self.chain.get('www.theuselessweb.com')
         self.assertEquals(
             records,
-            [
-                Record(uwstr,fstr, 'CNAME',3600),
-                Record(fstr, awstr,'CNAME',60),
-                Record(awstr,ipstr,'A'    ,60),
-            ]
+            expected_records,
         )
 
-        host_data = self.dig('www.theuselessweb.com')
-        #self.assertIn(
-        #    'NOERROR',
-        #    host_data
-        #)
+        self.do_test_record(*expected_records)
 
     def test_async(self):
         '''
