@@ -54,8 +54,8 @@ def lookup_str(table, code):
 
     Not a normalizer, expects an int.
     '''
-    for (key, value) in table.items():
-        if value == code:
+    for key in sorted(table.keys()):
+        if table[key] == code:
             return key
     raise KeyError("Could not find label for code %r" % code)
 
