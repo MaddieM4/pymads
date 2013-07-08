@@ -125,6 +125,22 @@ class TestResolution(unittest.TestCase):
         self.chain = Chain([DummyDnsSource(packet)])
         self.server.config['chains'] = [self.chain]
 
+        # Test input parsing
+        uwstr = 'www.theuselessweb.com'
+        awstr = 's3-website-us-east-1.amazonaws.com'
+        ipstr = '205.251.242.131'
+        fstr  = uwstr + '.' + awstr
+
+        records = self.chain.get('www.theuselessweb.com')
+        self.assertEquals(
+            records,
+            [
+                Record(uwstr,fstr, 'CNAME',3600),
+                Record(fstr, awstr,'CNAME',60),
+                Record(awstr,ipstr,'A'    ,60),
+            ]
+        )
+
         host_data = self.dig('www.theuselessweb.com')
         #self.assertIn(
         #    'NOERROR',

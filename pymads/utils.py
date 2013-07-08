@@ -65,10 +65,10 @@ def str2labels(source, offset=0):
         length, = struct.unpack('!B', source[offset:offset+1].export())
         if length & 0xc0:
             pointer, = struct.unpack('!H', source[offset:offset+2].export())
-            pointer = pointer & (0xff-0xc0)
+            pointer = pointer & 0x3fff # 0xffff - 0xc000, bitmask for pointer
             if pointer > len(source):
                 raise DnsError('FORMERR', 'Bad pointer')
-            return offset+2, str2labels(source, pointer)[1]
+            return offset+2, labels + str2labels(source, pointer)[1]
         offset += 1
         if length == 0:
             break

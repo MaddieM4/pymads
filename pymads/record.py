@@ -97,6 +97,9 @@ class Record(object):
         '''
         return const.RECORD_CLASSES[self._rclass]
 
+    def __eq__(self, other):
+        return (isinstance(other, Record) and hash(self) == hash(other))
+
     def __hash__(self):
         return hash((
             self.domain_name,
