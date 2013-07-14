@@ -106,7 +106,7 @@ class Consumer(object):
         Process and respond to a request packet.
         '''
         for chain in self.server.config['chains']:
-            records = chain.get(req.name)
+            records = chain.get(req)
             if records:
                 if self.debug:
                     print('Found %r' % req)

@@ -33,5 +33,9 @@ class DictSource(object):
     def __init__(self, data = {}):
         self.data = dict(data)
 
-    def get(self, domain):
-        return self.data.get(domain, [])
+    def get(self, request):
+        if isinstance(req_in, Request):
+            name = request.name
+        else:
+            name = request
+        return self.data.get(name, [])

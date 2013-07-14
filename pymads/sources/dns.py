@@ -78,21 +78,24 @@ class DnsSource(object):
 
         raise Exception('External resolution timed out')
 
-    def get(self, domain):
-        req = self._make_request(domain)
+    def get(self, req_in):
+        if isinstance(req_in, Request):
+            req_out = self._make_request(req_in.name, req_in.qtype, req_in.qclass)
+        else:
+            req_out = self._make_request(req_in)
 
-        resp = self.exchange(req)
+        resp = self.exchange(req_out)
         if resp.flag_rcode != 0:
             raise Exception("Query failed with code %d" % resp.flag_rcode)
         else:
             return list(resp.records)
 
-    def _make_request(self, domain):
+    def _make_request(self, domain, qtype=None, qclass=None):
         '''
         Create a Request object for exchange based on a given domain.
         '''
         self.appid += 1
-        req = Request(self.appid)
+        req = Request(qid=self.appid, qtype=qtype, qclass=qclass)
         req.name = domain
         req.flag_rd = True # Use recursion where available
 
