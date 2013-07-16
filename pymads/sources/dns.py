@@ -21,8 +21,9 @@ import socket
 from persei import RawData
 from pymads.request import Request
 from pymads.response import Response
+from pymads.sources.source import Source
 
-class DnsSource(object):
+class DnsSource(Source):
     '''
     Used for recursive resolution. Pulls data from external DNS server.
     '''
@@ -79,10 +80,7 @@ class DnsSource(object):
         raise Exception('External resolution timed out')
 
     def get(self, req_in):
-        if isinstance(req_in, Request):
-            req_out = self._make_request(req_in.name, req_in.qtype, req_in.qclass)
-        else:
-            req_out = self._make_request(req_in)
+        req_out = self._make_request(req_in.name, req_in.qtype, req_in.qclass)
 
         resp = self.exchange(req_out)
         if resp.flag_rcode != 0:
@@ -148,4 +146,4 @@ class MultiDNS(object):
         '''
         Retrieve domain name info from a given server.
         '''
-        return self.get_source(server_addr).get(domain_name)
+        return self.get_source(server_addr).get_domain_string(domain_name)

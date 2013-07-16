@@ -32,7 +32,7 @@ class TestRecursion(unittest.TestCase):
     def test_recursion(self):
         self.looks_about_right(
             'google.com',
-            self.source.get('google.com')
+            self.source.get_domain_string('google.com')
         )
 
     def test_multidns(self):
@@ -44,14 +44,14 @@ class TestRecursion(unittest.TestCase):
 
         self.looks_about_right(
             'google.com',
-            mdns.get('google.com', addr)
+            mdns.get_domain_string('google.com', addr)
         )
 
         # What about other servers?
         addr2 = ('8.8.4.4', 53)
         self.looks_about_right(
             'google.com',
-            mdns.get('google.com', addr2)
+            mdns.get_domain_string('google.com', addr2)
         )
 
         # And we aren't throwing things away after we make them
