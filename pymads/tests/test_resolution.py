@@ -144,7 +144,7 @@ class TestResolution(unittest.TestCase):
             Record(awstr,ipstr,'A'    ,60),
         ]
 
-        records = self.chain.get('www.theuselessweb.com')
+        records = self.chain.get_domain_string('www.theuselessweb.com')
         self.assertEquals(
             records,
             expected_records,

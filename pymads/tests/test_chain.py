@@ -32,10 +32,10 @@ class TestChains(unittest.TestCase):
         source = DictSource({hostname: [record]})
         chain  = Chain([source])
         self.assertEqual(
-            chain.get(hostname),
+            chain.get_domain_string(hostname),
             [record]
         )
-        self.assertEqual(chain.get('not'+hostname), [])
+        self.assertEqual(chain.get_domain_string('not'+hostname), [])
 
     def test_jsonsource(self):
         from pymads.sources.json import JSONSource
@@ -46,13 +46,13 @@ class TestChains(unittest.TestCase):
 
         source  = JSONSource(path)
         chain   = Chain([source])
-        results = chain.get(hostname)
+        results = chain.get_domain_string(hostname)
 
         self.assertEqual(
             results.pop().rdata,
             ip_addr
         )
-        self.assertEqual(chain.get('not'+hostname), [])
+        self.assertEqual(chain.get_domain_string('not'+hostname), [])
 
     def test_cachefilter(self):
         from pymads.sources.dict  import DictSource
@@ -67,7 +67,7 @@ class TestChains(unittest.TestCase):
         chain  = Chain([source], [filter])
 
         self.assertEqual(
-            chain.get(hostname),
+            chain.get_domain_string(hostname),
             [record]
         )
 
@@ -75,6 +75,6 @@ class TestChains(unittest.TestCase):
         source.data = {}
 
         self.assertEqual(
-            chain.get(hostname),
+            chain.get_domain_string(hostname),
             [record]
         )

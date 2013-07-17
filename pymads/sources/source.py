@@ -15,6 +15,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
+from pymads.request import Request
+
 class Source(object):
     '''
     A source for pymads DNS records
