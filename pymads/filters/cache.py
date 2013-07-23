@@ -24,9 +24,10 @@ class CacheFilter(object):
         self.cache = {}
 
     def get(self, request):
-        if request in self.cache:
-            return self.cache[request]
+        name = request.name
+        if name in self.cache:
+            return self.cache[name]
         else:
             result = list(self.source(request))
-            self.cache[request] = result
+            self.cache[name] = result
             return result

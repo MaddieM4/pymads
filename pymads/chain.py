@@ -15,7 +15,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
-class Chain(object):
+from pymads.sources.source import Source
+
+class Chain(Source):
     '''
     Represents a source for DNS results, including filters
     '''

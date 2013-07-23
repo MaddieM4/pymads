@@ -15,25 +15,24 @@ You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
-from pymads.sources.source import Source
+from pymads.request import Request
 
-class DictSource(Source):
+class Source(object):
     '''
-    Simplest source. All data in memory, in the form of a dict.
-
-    Data format:
-        {
-            'mydomain.com' : [
-                <pymads.record.Record>
-            ],
-            'myotherdomain.com' : [
-                <pymads.record.Record>,
-                <pymads.record.Record>,
-            ]
-        }
+    A source for pymads DNS records
     '''
-    def __init__(self, data = {}):
-        self.data = dict(data)
 
     def get(self, request):
-        return self.data.get(request.name, [])
+        '''
+        Takes request, returns array of pymads records.
+        '''
+        raise NotImplementedError('Source subclass must define get()')
+
+    def get_domain_string(self, domain):
+        '''
+        Takes domain name string, and return pymads records
+        '''
+        request = Request()
+        request.name = domain
+        return self.get(request)
+
