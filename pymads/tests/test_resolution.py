@@ -95,9 +95,9 @@ class TestResolution(unittest.TestCase):
             raise Exception(answer_section)
         self.assertEquals(answers, [])
 
-    def dig(self, domain_name, extra=[]):
+    def dig(self, domain_name, qtype='ANY', extra=[]):
         return dig(domain_name, test_host, test_port,
-                     timeout=1, retry=0, extra=extra)
+                     timeout=1, retry=0, qtype=qtype, extra=extra)
 
     def test_A(self):
         '''
@@ -144,7 +144,7 @@ class TestResolution(unittest.TestCase):
             Record(awstr,ipstr,'A'    ,60),
         ]
 
-        records = self.chain.get('www.theuselessweb.com')
+        records = self.chain.get_domain_string('www.theuselessweb.com')
         self.assertEquals(
             records,
             expected_records,
@@ -187,10 +187,10 @@ class TestResolution(unittest.TestCase):
         self.chain.sources.append(source)
 
         # Test where recursion is wanted
-        self.do_test_record(record, record_official)
+        self.do_test_record(record, record_official, qtype='A')
         # Test where recursion is unwanted
         # TODO : use source flags
-        self.do_test_record(record, record_official,
+        self.do_test_record(record, record_official, qtype='A',
             extra=['+norecurse'])
 
     def test_error_SERVFAIL(self):
@@ -280,12 +280,12 @@ class TestResolutionIPv6(TestResolution):
         self.thread = threading.Thread(target=self.server.serve)
         self.thread.start()
 
-    def dig(self, domain_name, extra=[]):
+    def dig(self, domain_name, qtype='ANY', extra=[]):
         '''
         IPv6 version of dig function.
         '''
         return dig(domain_name, test_host_ipv6[0], test_port,
-                     timeout=1, retry=0, extra=extra)
+                     timeout=1, retry=0, qtype=qtype, extra=extra)
 
     def make_socket(self):
         '''

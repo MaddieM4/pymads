@@ -32,7 +32,7 @@ class TestRecursion(unittest.TestCase):
     def test_recursion(self):
         self.looks_about_right(
             'google.com',
-            self.source.get('google.com')
+            self.source.get_domain_string('google.com')
         )
 
     def test_multidns(self):
