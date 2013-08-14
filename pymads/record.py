@@ -126,6 +126,8 @@ class Record(object):
             return 'IPv6'
         elif self.rtype in ('NS', 'CNAME'):
             return 'domain'
+        elif self.rtype in ('SOA',):
+            return 'zone'
         else:
             return 'unknown'
 
@@ -159,6 +161,34 @@ class Record(object):
         Pack a record that holds an encoded domain name.
         '''
         return utils.labels2str(self.rdata.split('.'))
+
+    def pack_rdata_zone(self):
+        '''
+        Pack a record that holds global parameters of a zone.
+        '''
+        keys = [
+            'mname',
+            'rname',
+            'serial',
+            'refresh',
+            'retry',
+            'expire',
+            'minimum'
+        ]
+        if set(self.rdata.keys()) != set(keys):
+            raise TypeError("invalid SOA record")
+
+        packed  = utils.labels2str(self.rdata['mname'].split('.'))
+        packed += utils.labels2str(self.rdata['rname'].split('.'))
+        packed += struct.pack(
+            "!IiiiI",
+            self.rdata['serial'],
+            self.rdata['refresh'],
+            self.rdata['retry'],
+            self.rdata['expire'],
+            self.rdata['minimum']
+        )
+        return packed
 
     @RawDataDecorator(args=False)
     def unpack_rdata(self, data, offset, length):
@@ -198,6 +228,24 @@ class Record(object):
         return '.'.join(
             String(x).export()
             for x in utils.str2labels(data, offset)[1]
+        )
+
+    def unpack_rdata_offset_zone(self, data, offset, length):
+        '''
+        Unpack a record that holds global parameters of a zone.
+        '''
+        offset, mname = utils.str2labels(data, offset)
+        offset, rname = utils.str2labels(data, offset)
+
+        return dict(
+            {
+                'mname': '.'.join(String(x).export() for x in mname),
+                'rname': '.'.join(String(x).export() for x in rname),
+            },
+            **dict(zip(
+                ['serial', 'refresh', 'retry', 'expire', 'minimum'],
+                struct.unpack("!IiiiI", data[offset:offset+20].export())
+            ))
         )
 
     def pack(self):
