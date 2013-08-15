@@ -22,10 +22,14 @@ from persei import String, RawData, RawDataDecorator
 from pymads import const
 from pymads import utils
 
-SOAType = namedtuple(
+soa_namedtuple = namedtuple(
     'SOAType',
     ['mname', 'rname', 'serial', 'refresh', 'retry', 'expire', 'minimum']
 )
+
+class SOAType(soa_namedtuple):
+    def __str__(self):
+        return "%s.\t%s.\t%d\t%d\t%d\t%d\t%d" % self
 
 class Record(object):
     ''' Represents a DNS record. '''
