@@ -180,7 +180,7 @@ class TestResolution(unittest.TestCase):
         record   = Record(hostname, ip_addr)
         self.setup_chain(record)
 
-        record_official = Record(hostname, '192.0.43.10', rttl=172800)
+        record_official = Record(hostname, '93.184.216.119', rttl=86400)
 
         # Use b.iana-servers.net for consistent TTL
         source = DnsSource(remote=('b.iana-servers.net', 53))
