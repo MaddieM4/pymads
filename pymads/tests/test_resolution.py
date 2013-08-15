@@ -143,6 +143,28 @@ class TestResolution(unittest.TestCase):
 
         self.do_test_record(*expected_records)
 
+    def test_SOA(self):
+        '''
+        Attempt to store and resolve a SOA record.
+        '''
+        from pymads.record import SOAType
+        record = Record(
+            'example.com',
+            SOAType(
+                'ns.example.com',
+                'dns-admin.example.com',
+                2003080800,
+                172800,
+                1209600,
+                900,
+                3600
+            ),
+            rtype = 'SOA'
+        )
+
+        self.setup_chain(record)
+        self.do_test_record(record)
+
     def test_async(self):
         '''
         Run server and consumer threads seperately.
