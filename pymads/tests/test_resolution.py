@@ -73,16 +73,7 @@ class TestResolution(unittest.TestCase):
         ]
 
         for record in records:
-            success_text = '%s.\t%d\t%s\t%s\t%s' % (
-                record.domain_name,
-                record.rttl,
-                record.rclass,
-                record.rtype,
-                record.rdata
-            )
-
-            if record.packtype == 'domain':
-                success_text += '.'
+            success_text = str(record)
 
             self.assertIn(
                 success_text,

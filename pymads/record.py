@@ -128,6 +128,20 @@ class Record(object):
             self.rdata,
         )
 
+    def __str__(self):
+        text = '%s.\t%d\t%s\t%s\t%s' % (
+           self.domain_name,
+           self.rttl,
+           self.rclass,
+           self.rtype,
+           self.rdata
+        )
+
+        if self.packtype == 'domain':
+           text += '.'
+
+        return text
+
     @property
     def packtype(self):
         if self.rtype in ('A',):
