@@ -16,10 +16,16 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
 import struct
+from collections import namedtuple
 from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
 from persei import String, RawData, RawDataDecorator
 from pymads import const
 from pymads import utils
+
+SOAType = namedtuple(
+    'SOAType',
+    ['mname', 'rname', 'serial', 'refresh', 'retry', 'expire', 'minimum']
+)
 
 class Record(object):
     ''' Represents a DNS record. '''
@@ -166,28 +172,18 @@ class Record(object):
         '''
         Pack a record that holds global parameters of a zone.
         '''
-        keys = [
-            'mname',
-            'rname',
-            'serial',
-            'refresh',
-            'retry',
-            'expire',
-            'minimum'
-        ]
-        if set(self.rdata.keys()) != set(keys):
-            raise TypeError("invalid SOA record")
+        if type(self.rdata) is dict:
+            if set(self.rdata.keys()) != set(SOAType._fields):
+                raise TypeError("invalid SOA record")
+            rdata = SOAType(*[self.rdata[f] for f in SOAType._fields])
+        elif type(self.rdata) is list:
+            rdata = SOAType(*self.rdata)
+        else:
+            rdata = self.rdata
 
-        packed  = utils.labels2str(self.rdata['mname'].split('.'))
-        packed += utils.labels2str(self.rdata['rname'].split('.'))
-        packed += struct.pack(
-            "!IiiiI",
-            self.rdata['serial'],
-            self.rdata['refresh'],
-            self.rdata['retry'],
-            self.rdata['expire'],
-            self.rdata['minimum']
-        )
+        packed  = utils.labels2str(rdata.mname.split('.'))
+        packed += utils.labels2str(rdata.rname.split('.'))
+        packed += struct.pack("!IiiiI", *rdata[2:])
         return packed
 
     @RawDataDecorator(args=False)
@@ -237,15 +233,10 @@ class Record(object):
         offset, mname = utils.str2labels(data, offset)
         offset, rname = utils.str2labels(data, offset)
 
-        return dict(
-            {
-                'mname': '.'.join(String(x).export() for x in mname),
-                'rname': '.'.join(String(x).export() for x in rname),
-            },
-            **dict(zip(
-                ['serial', 'refresh', 'retry', 'expire', 'minimum'],
-                struct.unpack("!IiiiI", data[offset:offset+20].export())
-            ))
+        return SOAType(
+            '.'.join(String(x).export() for x in mname),
+            '.'.join(String(x).export() for x in rname),
+            *struct.unpack("!IiiiI", data[offset:offset+20].export())
         )
 
     def pack(self):
