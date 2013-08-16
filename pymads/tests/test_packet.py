@@ -60,7 +60,7 @@ class TestPacket(unittest.TestCase):
 
     def test_cycle_response(self):
         from pymads.request import Request
-        from pymads.record  import Record
+        from pymads.record  import Record, SOAType
 
         req  = Request(25, [], 'AAAA')
         req.name = 'example.com'
@@ -71,6 +71,23 @@ class TestPacket(unittest.TestCase):
 
         rec2 = Record('example.com', '::2', 'AAAA')
         resp = req.respond(0, [rec, rec2])
+
+        self.do_test_pack_cycle(resp)
+
+        rec3 = Record(
+            'example.com',
+            SOAType(
+                'ns.example.com',
+                'dns-admin.example.com',
+                2003080800,
+                172800,
+                1209600,
+                900,
+                3600
+            ),
+            'SOA'
+        )
+        resp = req.respond(0, [rec, rec2, rec3])
 
         self.do_test_pack_cycle(resp)
 

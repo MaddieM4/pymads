@@ -16,10 +16,20 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
 import struct
+from collections import namedtuple
 from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
 from persei import String, RawData, RawDataDecorator
 from pymads import const
 from pymads import utils
+
+soa_namedtuple = namedtuple(
+    'SOAType',
+    ['mname', 'rname', 'serial', 'refresh', 'retry', 'expire', 'minimum']
+)
+
+class SOAType(soa_namedtuple):
+    def __str__(self):
+        return "%s.\t%s.\t%d\t%d\t%d\t%d\t%d" % self
 
 class Record(object):
     ''' Represents a DNS record. '''
@@ -118,6 +128,20 @@ class Record(object):
             self.rdata,
         )
 
+    def __str__(self):
+        text = '%s.\t%d\t%s\t%s\t%s' % (
+           self.domain_name,
+           self.rttl,
+           self.rclass,
+           self.rtype,
+           self.rdata
+        )
+
+        if self.packtype == 'domain':
+           text += '.'
+
+        return text
+
     @property
     def packtype(self):
         if self.rtype in ('A',):
@@ -126,6 +150,8 @@ class Record(object):
             return 'IPv6'
         elif self.rtype in ('NS', 'CNAME'):
             return 'domain'
+        elif self.rtype in ('SOA',):
+            return 'zone'
         else:
             return 'unknown'
 
@@ -159,6 +185,22 @@ class Record(object):
         Pack a record that holds an encoded domain name.
         '''
         return utils.labels2str(self.rdata.split('.'))
+
+    def pack_rdata_zone(self):
+        '''
+        Pack a record that holds global parameters of a zone.
+        '''
+        if type(self.rdata) is dict:
+            if set(self.rdata.keys()) != set(SOAType._fields):
+                raise TypeError("invalid SOA record")
+            self.rdata = SOAType(*[self.rdata[f] for f in SOAType._fields])
+        elif type(self.rdata) in (tuple, list):
+            self.rdata = SOAType(*self.rdata)
+
+        packed  = utils.labels2str(self.rdata.mname.split('.'))
+        packed += utils.labels2str(self.rdata.rname.split('.'))
+        packed += struct.pack("!IiiiI", *self.rdata[2:])
+        return packed
 
     @RawDataDecorator(args=False)
     def unpack_rdata(self, data, offset, length):
@@ -198,6 +240,19 @@ class Record(object):
         return '.'.join(
             String(x).export()
             for x in utils.str2labels(data, offset)[1]
+        )
+
+    def unpack_rdata_offset_zone(self, data, offset, length):
+        '''
+        Unpack a record that holds global parameters of a zone.
+        '''
+        offset, mname = utils.str2labels(data, offset)
+        offset, rname = utils.str2labels(data, offset)
+
+        return SOAType(
+            '.'.join(String(x).export() for x in mname),
+            '.'.join(String(x).export() for x in rname),
+            *struct.unpack("!IiiiI", data[offset:offset+20].export())
         )
 
     def pack(self):
