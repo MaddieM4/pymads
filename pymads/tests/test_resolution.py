@@ -148,22 +148,24 @@ class TestResolution(unittest.TestCase):
         Attempt to store and resolve a SOA record.
         '''
         from pymads.record import SOAType
-        record = Record(
-            'example.com',
-            SOAType(
-                'ns.example.com',
-                'dns-admin.example.com',
-                2003080800,
-                172800,
-                1209600,
-                900,
-                3600
-            ),
-            rtype = 'SOA'
-        )
 
-        self.setup_chain(record)
-        self.do_test_record(record)
+        keys = ('mname', 'rname',
+            'serial', 'refresh', 'retry', 'expire', 'minimum')
+        values = ('ns.example.com', 'dns-admin.example.com',
+            2003080800, 172800, 1209600, 900, 3600)
+
+        # Test every valid input
+        for rdata in (values, dict(zip(keys, values)), SOAType(*values)):
+            record = Record('example.com', rdata, rtype = 'SOA')
+
+            self.setup_chain(record)
+            self.do_test_record(record)
+
+        # Test invalid dict input
+        self.assertRaises(
+            TypeError,
+            lambda: Record('example.com', dict(zip(keys, values[:-1])), 'SOA')
+        )
 
     def test_async(self):
         '''

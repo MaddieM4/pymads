@@ -193,15 +193,13 @@ class Record(object):
         if type(self.rdata) is dict:
             if set(self.rdata.keys()) != set(SOAType._fields):
                 raise TypeError("invalid SOA record")
-            rdata = SOAType(*[self.rdata[f] for f in SOAType._fields])
-        elif type(self.rdata) is list:
-            rdata = SOAType(*self.rdata)
-        else:
-            rdata = self.rdata
+            self.rdata = SOAType(*[self.rdata[f] for f in SOAType._fields])
+        elif type(self.rdata) in (tuple, list):
+            self.rdata = SOAType(*self.rdata)
 
-        packed  = utils.labels2str(rdata.mname.split('.'))
-        packed += utils.labels2str(rdata.rname.split('.'))
-        packed += struct.pack("!IiiiI", *rdata[2:])
+        packed  = utils.labels2str(self.rdata.mname.split('.'))
+        packed += utils.labels2str(self.rdata.rname.split('.'))
+        packed += struct.pack("!IiiiI", *self.rdata[2:])
         return packed
 
     @RawDataDecorator(args=False)
