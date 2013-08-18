@@ -31,6 +31,7 @@ DEFAULT_CONFIG = {
     'listen_host' : '0.0.0.0',
     'listen_port' : 53,
     'chains' : [],
+    'log' : 'WARN',
     'queue_class' : queue.Queue,
     'own_consumer': True, # Set to False for multithread/extern consumer
 }
@@ -47,8 +48,9 @@ class DnsServer(object):
         See pymads.server.DEFAULT_CONFIG for more info.
         '''
         self.config  = dict(DEFAULT_CONFIG) # Clone
-        self.log = 'WARNING'
         self.config.update(kwargs) # Customize
+        self.logger  = logging.getLogger('server')
+        self.logger.setLevel(self.log)
         self.serving = True
         self.socket  = None
         self.guard   = ErrorConverter(['SERVFAIL'])
@@ -95,18 +97,17 @@ class DnsServer(object):
 
         When set to DEBUG, detailed information will be printed.
         '''
-        return self.config['log']
+        if isinstance(self.config['log'], str):
+            return getattr(logging, self.config['log'].upper())
+        else:
+            return self.config['log']
 
     @log.setter
     def log(self, level):
         """
         Sets logging level.
         """
-        if isinstance(level, str):
-            self.config['log'] = getattr(logging, level.upper())
-        else:
-            self.config['log'] = level
-        logging.basicConfig(level = self.config['log'])
+        self.config['log'] = level
 
     def bind(self):
         """
@@ -167,7 +168,7 @@ def serve_standalone(*args):
         -H, --listen-host HOST   Host address to listen on [default: 0.0.0.0]
 
         -v --verbose             Verbose output
-        -d --log                 Logging level [default: WARNING]
+        -d, --log LEVEL          Logging level [default: WARN]
         -h --help                Show help
         --version                Show version and exit
     '''

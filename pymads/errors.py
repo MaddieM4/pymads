@@ -40,7 +40,7 @@ class ErrorConverter(object):
         whenever we convert a non-DnsError exception to a DnsError.
         '''
         self.args = tuple(args)
-        self.log = logging.getLogger('exceptions')
+        self.log = logging.getLogger('server')
 
     def __enter__(self):
         pass
