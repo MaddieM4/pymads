@@ -21,6 +21,7 @@ from pymads import request
 from pymads.errors import DnsError
 from pymads.extern import queue as queue_module
 import traceback
+import logging
 
 class Consumer(object):
     '''
