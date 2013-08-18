@@ -50,7 +50,7 @@ class TestErrors(unittest.TestCase):
 class TestConverter(unittest.TestCase):
     def test_dnserr(self):
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((3,)).quiet():
+            with ErrorConverter((3,)):
                 raise DnsError(1)
         
         self.assertEquals(
@@ -60,7 +60,7 @@ class TestConverter(unittest.TestCase):
 
     def test_diverr(self):
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((3,)).quiet():
+            with ErrorConverter((3,)):
                 return 1/0
 
         # Determine normal args for this exception...
@@ -81,7 +81,7 @@ class TestConverter(unittest.TestCase):
 
     def test_customerr(self):
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((1,)).quiet():
+            with ErrorConverter((1,)):
                 raise Exception()
         
         self.assertEquals(
@@ -90,7 +90,7 @@ class TestConverter(unittest.TestCase):
         )
 
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((1,)).quiet():
+            with ErrorConverter((1,)):
                 raise Exception('ABC')
         
         self.assertEquals(
@@ -99,7 +99,7 @@ class TestConverter(unittest.TestCase):
         )
 
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((1,)).quiet():
+            with ErrorConverter((1,)):
                 raise Exception('ABC', 123)
         
         self.assertEquals(
@@ -110,7 +110,7 @@ class TestConverter(unittest.TestCase):
     def test_badinit(self):
         # Someone forgot that the first argument is an iterable...
         with self.assertRaises(TypeError) as assertion:
-            with ErrorConverter(1).quiet():
+            with ErrorConverter(1):
                 raise Exception()
         
         self.assertIn(
