@@ -16,6 +16,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
 import struct
+import logging
 from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
 from persei import String, RawData, RawDataDecorator
 from pymads import const
@@ -127,6 +128,7 @@ class Record(object):
         elif self.rtype in ('NS', 'CNAME'):
             return 'domain'
         else:
+            logging.warn('unknown record type ' + self.rtype)
             return 'unknown'
 
     @RawDataDecorator()
