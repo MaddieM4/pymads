@@ -34,13 +34,13 @@ class ErrorConverter(object):
     '''
     Converts all non-DnsError exceptions to DnsError exceptions.
     '''
-    def __init__(self, args):
+    def __init__(self, args, logger_name='server'):
         '''
         These args are used as the first args in the DnsError constructor
         whenever we convert a non-DnsError exception to a DnsError.
         '''
         self.args = tuple(args)
-        self.log = logging.getLogger('server')
+        self.log = logging.getLogger(logger_name)
 
     def __enter__(self):
         pass

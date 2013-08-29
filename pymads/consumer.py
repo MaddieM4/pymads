@@ -95,7 +95,7 @@ class Consumer(object):
         for chain in self.server.config['chains']:
             records = chain.get(req)
             if records:
-                logging.debug('Found %r%s' % (
+                self.server.logger.debug('Found %r%s' % (
                     req,
                     ''.join("\n * %r" % r for r in records)
                 ))
@@ -103,5 +103,5 @@ class Consumer(object):
                 resp = req.respond(0, records)
                 return resp.pack()
         # No records found
-        logging.debug('Unknown %r' % req)
+        self.server.logger.debug('Unknown %r' % req)
         raise DnsError('NXDOMAIN', "query is not for our domain: %r" % req)
