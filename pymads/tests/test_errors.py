@@ -57,7 +57,7 @@ class TestConverter(unittest.TestCase):
 
         # Setup a logger that writes to a string only
         self.io = StringIO()
-        handler = logging.StreamHandler(stream=self.io)
+        handler = logging.StreamHandler(self.io)
         log = logging.getLogger('test')
         log.propagate = False
         log.setLevel(logging.DEBUG)
