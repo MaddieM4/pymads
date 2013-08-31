@@ -18,6 +18,7 @@ along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 from __future__ import absolute_import
 
 import struct
+import logging
 from persei import String, RawData
 from pymads import const
 from pymads import utils
@@ -245,6 +246,8 @@ class Packet(object):
             self.unpack_body(packet)
         if self.qclass != 1:
             raise DnsError('FORMERR', "Invalid class: " + self.qclass)
+        logging.debug(self)
+
 
     def unpack_header(self, packet):
         '''

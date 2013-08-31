@@ -204,7 +204,6 @@ class TestResolution(unittest.TestCase):
 
         self.chain = Chain([BadSource()])
         self.server.config['chains'] = [self.chain]
-        self.server.debug = False
         host_data = self.dig('sushi.org')
         self.assertIn(
             'SERVFAIL',
