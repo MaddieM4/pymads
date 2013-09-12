@@ -15,8 +15,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
-from __future__ import print_function
-
 import socket
 from persei import RawData
 from pymads.request import Request

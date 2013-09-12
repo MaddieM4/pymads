@@ -14,14 +14,12 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
-from __future__ import print_function
 import sys
 
 from pymads import request
 from pymads.errors import DnsError
 from pymads.extern import queue as queue_module
 import traceback
-import logging
 
 class Consumer(object):
     '''
