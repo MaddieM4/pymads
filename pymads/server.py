@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 
 import socket
 import sys
+import logging
 
 from pymads.consumer import Consumer
 from pymads.errors import ErrorConverter
@@ -29,8 +30,8 @@ from pymads.extern import queue
 DEFAULT_CONFIG = {
     'listen_host' : '0.0.0.0',
     'listen_port' : 53,
-    'debug'  : False,
     'chains' : [],
+    'log' : 'WARN',
     'queue_class' : queue.Queue,
     'own_consumer': True, # Set to False for multithread/extern consumer
 }
@@ -48,6 +49,8 @@ class DnsServer(object):
         '''
         self.config  = dict(DEFAULT_CONFIG) # Clone
         self.config.update(kwargs) # Customize
+        self.logger  = logging.getLogger('server')
+        self.logger.setLevel(self.log)
         self.serving = True
         self.socket  = None
         self.guard   = ErrorConverter(['SERVFAIL'])
@@ -88,20 +91,23 @@ class DnsServer(object):
         self.config['listen_host'] = int(host)
 
     @property
-    def debug(self):
+    def log(self):
         '''
-        Debug mode affects how the server deals with errors.
+        Logging level affects how the server deals with errors.
 
-        In debug mode, lookup failures and error tracebacks will be printed.
+        When set to DEBUG, detailed information will be printed.
         '''
-        return self.config['debug']
+        if isinstance(self.config['log'], str):
+            return getattr(logging, self.config['log'].upper())
+        else:
+            return self.config['log']
 
-    @debug.setter
-    def debug(self, debug):
+    @log.setter
+    def log(self, level):
         """
-        Sets whether we are in debug mode.
+        Sets logging level.
         """
-        self.config['debug'] = bool(debug)
+        self.config['log'] = level
 
     def bind(self):
         """
@@ -162,7 +168,7 @@ def serve_standalone(*args):
         -H, --listen-host HOST   Host address to listen on [default: 0.0.0.0]
 
         -v --verbose             Verbose output
-        -d --debug               Debug mode
+        -d, --log LEVEL          Logging level [default: WARN]
         -h --help                Show help
         --version                Show version and exit
     '''
@@ -176,7 +182,7 @@ def serve_standalone(*args):
     config  = {}
     config['listen_port'] = int(options['--listen-port'])
     config['listen_host'] = options['--listen-host']
-    config['debug']       = options['--debug']
+    config['log']         = options['--log']
 
     path   = options['<source_path>']
     if path == '-':

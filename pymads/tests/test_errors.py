@@ -48,9 +48,27 @@ class TestErrors(unittest.TestCase):
         )
 
 class TestConverter(unittest.TestCase):
+    def setUp(self):
+        import logging
+        try:
+            from StringIO import StringIO
+        except ImportError:
+            from io import StringIO
+
+        # Setup a logger that writes to a string only
+        self.io = StringIO()
+        handler = logging.StreamHandler(self.io)
+        log = logging.getLogger('test')
+        log.propagate = False
+        log.setLevel(logging.DEBUG)
+        log.addHandler(handler)
+        handler.setFormatter(
+            logging.Formatter(fmt="[%(levelname)s:%(name)s]%(message)s")
+        )
+
     def test_dnserr(self):
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((3,)).quiet():
+            with ErrorConverter((3,)):
                 raise DnsError(1)
         
         self.assertEquals(
@@ -60,7 +78,7 @@ class TestConverter(unittest.TestCase):
 
     def test_diverr(self):
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((3,)).quiet():
+            with ErrorConverter((3,)):
                 return 1/0
 
         # Determine normal args for this exception...
@@ -81,16 +99,21 @@ class TestConverter(unittest.TestCase):
 
     def test_customerr(self):
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((1,)).quiet():
+            with ErrorConverter((1,), 'test'):
                 raise Exception()
-        
+
+        # Check logged information
+        msg = self.io.getvalue()
+        self.assertTrue(msg.find('[DEBUG:test]') == 0)
+        self.assertTrue(msg.find('Exception') > -1)
+
         self.assertEquals(
             repr(assertion.exception),
             "DnsError('FORMERR', 1)"
         )
 
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((1,)).quiet():
+            with ErrorConverter((1,)):
                 raise Exception('ABC')
         
         self.assertEquals(
@@ -99,7 +122,7 @@ class TestConverter(unittest.TestCase):
         )
 
         with self.assertRaises(DnsError) as assertion:
-            with ErrorConverter((1,)).quiet():
+            with ErrorConverter((1,)):
                 raise Exception('ABC', 123)
         
         self.assertEquals(
@@ -110,7 +133,7 @@ class TestConverter(unittest.TestCase):
     def test_badinit(self):
         # Someone forgot that the first argument is an iterable...
         with self.assertRaises(TypeError) as assertion:
-            with ErrorConverter(1).quiet():
+            with ErrorConverter(1):
                 raise Exception()
         
         self.assertIn(

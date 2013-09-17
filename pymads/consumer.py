@@ -14,7 +14,6 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
-from __future__ import print_function
 import sys
 
 from pymads import request
@@ -51,20 +50,6 @@ class Consumer(object):
         '''
         return self.server.serving
 
-    @property
-    def debug(self):
-        '''
-        Convenience access: is server in debug mode?
-        '''
-        return self.server.debug
-
-    @property
-    def guard(self):
-        '''
-        Convenience access: server error guard.
-        '''
-        return self.server.guard
-
     def listen(self):
         '''
         Loop for serving data.
@@ -82,7 +67,7 @@ class Consumer(object):
             return
 
         try:
-            with self.guard.quiet(not self.debug):
+            with self.server.guard:
                 req = request.Request()
                 req.unpack(packet)
                 resp_pkt = self.make_response(req)
@@ -108,13 +93,13 @@ class Consumer(object):
         for chain in self.server.config['chains']:
             records = chain.get(req)
             if records:
-                if self.debug:
-                    print('Found %r' % req)
-                    for rec in records:
-                        print(" * %r" % rec)
+                self.server.logger.debug('Found %r%s' % (
+                    req,
+                    ''.join("\n * %r" % r for r in records)
+                ))
+
                 resp = req.respond(0, records)
                 return resp.pack()
         # No records found
-        if self.debug:
-            print('Unknown %r' % req, file=sys.stderr)
+        self.server.logger.debug('Unknown %r' % req)
         raise DnsError('NXDOMAIN', "query is not for our domain: %r" % req)
