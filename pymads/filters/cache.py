@@ -26,13 +26,13 @@ class CacheFilter(object):
         self.cache = {}
 
     def get(self, request):
-        name = request.name
+        key = request.pack_question()
         now = datetime.now()
-        if name in self.cache:
-            return (r for r in self.cache[name] if now < r.ttl)
+        if key in self.cache and now < min(r.ttl for r in self.cache[key]):
+            return self.cache[key]
         else:
             result = list(self.source(request))
             for r in result:
                 r.ttl = now + timedelta(0, r.rttl)
-            self.cache[name] = result
+            self.cache[key] = result
             return result
