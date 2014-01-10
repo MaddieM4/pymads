@@ -78,3 +78,34 @@ class TestChains(unittest.TestCase):
             chain.get_domain_string(hostname),
             [record]
         )
+
+    def test_cachesetexpired(self):
+        from pymads.sources.dict  import DictSource
+        from pymads.filters.cache import CacheFilter
+
+        hostname1 = 'example.com'
+        hostname2 = 'example.org'
+        hostname3 = 'example.net'
+        ip_addr = '9.9.9.9'
+        expired = Record(hostname1, ip_addr, rttl=0)
+        record1 = Record(hostname1, ip_addr, rttl=1800)
+        record3 = Record(hostname3, ip_addr, rttl=1800)
+
+        source = DictSource({
+            hostname1: [expired],
+            hostname2: [record1, expired],
+            hostname3: [record3],
+        })
+        filter = CacheFilter()
+        chain  = Chain([source], [filter])
+
+        self.assertEqual(chain.get_domain_string(hostname1), [expired])
+        self.assertEqual(chain.get_domain_string(hostname2), [record1, expired])
+        self.assertEqual(chain.get_domain_string(hostname3), [record3])
+
+        # The record has expired
+        source.data = {}
+
+        self.assertEqual(chain.get_domain_string(hostname1), [])
+        self.assertEqual(chain.get_domain_string(hostname2), [])
+        self.assertEqual(chain.get_domain_string(hostname3), [record3])

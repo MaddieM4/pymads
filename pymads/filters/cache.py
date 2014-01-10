@@ -15,6 +15,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with Pymads.  If not, see <http://www.gnu.org/licenses/>
 '''
 
+from datetime import datetime, timedelta
+
 class CacheFilter(object):
     '''
     Doesn't hit the next layer of filtering if we already retrieved the data.
@@ -24,10 +26,13 @@ class CacheFilter(object):
         self.cache = {}
 
     def get(self, request):
-        name = request.name
-        if name in self.cache:
-            return self.cache[name]
+        key = request.pack_question()
+        now = datetime.now()
+        if key in self.cache and now < min(r.ttl for r in self.cache[key]):
+            return self.cache[key]
         else:
             result = list(self.source(request))
-            self.cache[name] = result
+            for r in result:
+                r.ttl = now + timedelta(0, r.rttl)
+            self.cache[key] = result
             return result
